@@ -1,5 +1,5 @@
 {
-  "name": "final-dev3-backend",
+  "name": "@final/backend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -26,6 +26,7 @@
     "typescript-eslint": "^8.57.0"
   },
   "dependencies": {
+    "@final/shared": "workspace:*",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
