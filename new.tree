@@ -1,0 +1,45 @@
+├── .gitignore
+├── apps
+│  ├── backend
+│  │  ├── eslint.config.js
+│  │  ├── package.json
+│  │  ├── pnpm-workspace.yaml
+│  │  ├── src
+│  │  │  └── app.ts
+│  │  └── tsconfig.json
+│  └── frontend
+│    ├── .gitignore
+│    ├── eslint.config.js
+│    ├── index.html
+│    ├── package.json
+│    ├── public
+│    │  ├── favicon.svg
+│    │  └── icons.svg
+│    ├── README.md
+│    ├── src
+│    │  ├── App.css
+│    │  ├── App.tsx
+│    │  ├── assets
+│    │  │  ├── hero.png
+│    │  │  ├── react.svg
+│    │  │  └── vite.svg
+│    │  ├── index.css
+│    │  └── main.tsx
+│    ├── tsconfig.app.json
+│    ├── tsconfig.json
+│    ├── tsconfig.node.json
+│    └── vite.config.ts
+├── package.json
+├── packages
+│  └── shared
+│    ├── dist
+│    │  ├── index.d.ts
+│    │  ├── index.d.ts.map
+│    │  ├── index.js
+│    │  └── index.js.map
+│    ├── package.json
+│    ├── src
+│    │  └── index.ts
+│    └── tsconfig.json
+├── pnpm-lock.yaml
+└── pnpm-workspace.yaml
