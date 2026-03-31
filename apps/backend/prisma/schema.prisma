@@ -1,0 +1,286 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider  = "prisma-client"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  output    = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+
+/**********
+|   ENUMS  |
+ **********/
+
+
+enum PersonType {
+  client
+  cashier
+  worker
+}
+
+enum WorkerSpecialty {
+  realism
+  cartoon
+  other
+}
+
+enum CashierSpecialty {
+  realism
+  cartoon
+  other
+}
+
+enum PaymentMethod {
+  cash
+  credit_card
+  transfer
+}
+
+enum StockMovementType {
+  entry
+  exit
+  waste
+}
+
+enum BillStatus {
+  pending
+  partially
+  paid
+  cancelled
+  refunded
+}
+
+/****************
+|   CORE TABLES  |
+ ****************/
+
+model Person {
+  person_id Int     @id @default(autoincrement())
+  first_name String
+  last_name  String
+  email     String  @unique
+  password  String
+  type      PersonType
+
+  // Relations
+  worker   Worker?
+  cashier  Cashier?
+  client   Client?
+
+  @@map("person")
+}
+
+/***************
+|   USER ROLES  |
+ ***************/
+
+model Worker {
+  worker_id Int    @id @default(autoincrement())
+  person_id Int    @unique
+  specialty WorkerSpecialty
+
+  // Relations
+  person Person @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
+  bills  Bill[]
+
+  @@map("worker")
+}
+
+model Cashier {
+  cashier_id Int    @id @default(autoincrement())
+  person_id  Int    @unique
+  specialty  CashierSpecialty
+
+  // Relations
+  person Person @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
+  bills  Bill[]
+
+  @@map("cashier")
+}
+
+model Client {
+  client_id      Int     @id @default(autoincrement())
+  person_id      Int     @unique
+  medical_notes String?
+
+  // Relations
+  person Person @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
+  bills  Bill[]
+
+  @@map("client")
+}
+
+
+/*************************
+|   PRODUCTS & INVENTORY  |
+ *************************/
+
+model Category {
+  category_id Int    @id @default(autoincrement())
+  name        String
+  description String?
+
+  // Relations
+  products Product[]
+
+  @@map("category")
+}
+
+model Product {
+  product_id  Int    @id @default(autoincrement())
+  category_id Int
+  name        String
+  brand       String
+
+  // Relations
+  category Category @relation(fields: [category_id], references: [category_id], onDelete: Cascade)
+  variants ProductVariant[]
+
+  @@map("product")
+}
+
+model ProductVariant {
+  product_variant_id Int     @id @default(autoincrement())
+  product_id         Int
+  presentation       String
+  min_stock_level    Int
+  price              Decimal @db.Decimal(10, 2)
+
+  // Relations
+  product          Product          @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  inventoryItems   InventoryItem[]
+  tattoMaterials   TattoMaterial[]
+
+  @@map("product_variant")
+}
+
+model InventoryItem {
+  inventory_item_id  Int     @id @default(autoincrement())
+  product_variant_id Int
+  batch_number       String
+  current_quantity   Int
+  expiry_date        DateTime?
+
+  // Relations
+  productVariant   ProductVariant @relation(fields: [product_variant_id], references: [product_variant_id], onDelete: Cascade)
+  stockMovements   StockMovement[]
+
+  @@map("inventory_item")
+}
+
+/*********************
+|   STOCK MANAGEMENT  |
+ *********************/
+
+model StockMovement {
+  stock_movement    Int    @id @default(autoincrement())
+  inventory_item_id Int
+  type              StockMovementType
+  quantity          Decimal @db.Decimal(10, 2)
+  reason            String?
+  create_at         DateTime @default(now())
+
+  // Relations
+  inventoryItem   InventoryItem @relation(fields: [inventory_item_id], references: [inventory_item_id], onDelete: Cascade)
+  billDetails     BillDetail[]
+
+  @@map("stock_movement")
+}
+
+/*******************
+|   TATTOO DESIGNS  |
+ *******************/
+
+model Img {
+  img_id      Int    @id @default(autoincrement())
+  source      Bytes  @db.ByteA
+  description String?
+
+  // Relations
+  tattoos Tatto[]
+
+  @@map("img")
+}
+
+model Tatto {
+  tatto_id  Int     @id @default(autoincrement())
+  img_id    Int
+  cost      Decimal @db.Decimal(10, 2)
+  time      DateTime @db.Time
+
+  // Relations
+  img        Img               @relation(fields: [img_id], references: [img_id], onDelete: Cascade)
+  materials  TattoMaterial[]
+
+  @@map("tatto")
+}
+
+model TattoMaterial {
+  product_variant_id Int
+  tatto_id           Int
+  quantity           Int
+
+  // Relations
+  productVariant ProductVariant @relation(fields: [product_variant_id], references: [product_variant_id], onDelete: Cascade)
+  tatto          Tatto          @relation(fields: [tatto_id], references: [tatto_id], onDelete: Cascade)
+
+  @@id([product_variant_id, tatto_id])
+  @@map("tatto_material")
+}
+
+// ============================================
+// BILLING & PAYMENTS
+// ============================================
+
+model Bill {
+  bill_id    Int    @id @default(autoincrement())
+  client_id  Int
+  worker_id  Int
+  cashier_id Int
+  create_at  DateTime @default(now())
+  status     BillStatus
+
+  // Relations
+  client       Client       @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
+  worker       Worker       @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
+  cashier      Cashier      @relation(fields: [cashier_id], references: [cashier_id], onDelete: Cascade)
+  billDetails  BillDetail[]
+  payments     Payment[]
+
+  @@map("bill")
+}
+
+model BillDetail {
+  bill_detail_id    Int @id @default(autoincrement())
+  bill_id           Int
+  stock_movement_id Int
+
+  // Relations
+  bill           Bill           @relation(fields: [bill_id], references: [bill_id], onDelete: Cascade)
+  stockMovement  StockMovement  @relation(fields: [stock_movement_id], references: [stock_movement], onDelete: Cascade)
+
+  @@map("bill_detail")
+}
+
+model Payment {
+  payment_id      Int     @id @default(autoincrement())
+  bill_id         Int
+  create_at       DateTime @default(now())
+  amout           Decimal @db.Decimal(10, 2)
+  method          PaymentMethod
+  transaction_ref String
+
+  // Relations
+  bill Bill @relation(fields: [bill_id], references: [bill_id], onDelete: Cascade)
+
+  @@map("payment")
+}
