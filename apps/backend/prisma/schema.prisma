@@ -4,7 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider  = "prisma-client"
+  provider  = "prisma-client-js"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
   output    = "../src/generated/prisma"
@@ -13,6 +13,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 
 
 
@@ -98,7 +99,6 @@ model Worker {
 model Cashier {
   cashier_id Int    @id @default(autoincrement())
   person_id  Int    @unique
-  specialty  CashierSpecialty
 
   // Relations
   person Person @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
@@ -212,14 +212,15 @@ model Img {
 }
 
 model Tatto {
-  tatto_id  Int     @id @default(autoincrement())
-  img_id    Int
-  cost      Decimal @db.Decimal(10, 2)
-  time      DateTime @db.Time
+  tatto_id   Int     @id @default(autoincrement())
+  img_id     Int
+  cost       Decimal @db.Decimal(10, 2)
+  time       DateTime @db.Time
 
   // Relations
   img        Img               @relation(fields: [img_id], references: [img_id], onDelete: Cascade)
   materials  TattoMaterial[]
+  billTattos BillTatto[]       @relation("BillToTatto")
 
   @@map("tatto")
 }
@@ -237,12 +238,12 @@ model TattoMaterial {
   @@map("tatto_material")
 }
 
-// ============================================
-// BILLING & PAYMENTS
-// ============================================
+/*******************
+|   BILLING & PAYMENTS  |
+ *******************/
 
 model Bill {
-  bill_id    Int    @id @default(autoincrement())
+  bill_id    Int     @id @default(autoincrement())
   client_id  Int
   worker_id  Int
   cashier_id Int
@@ -254,6 +255,7 @@ model Bill {
   worker       Worker       @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
   cashier      Cashier      @relation(fields: [cashier_id], references: [cashier_id], onDelete: Cascade)
   billDetails  BillDetail[]
+  billTattos   BillTatto[]   @relation("BillToTatto")
   payments     Payment[]
 
   @@map("bill")
@@ -269,6 +271,18 @@ model BillDetail {
   stockMovement  StockMovement  @relation(fields: [stock_movement_id], references: [stock_movement], onDelete: Cascade)
 
   @@map("bill_detail")
+}
+
+model BillTatto {
+  bill_id  Int
+  tatto_id Int
+
+  // Relations
+  bill  Bill  @relation("BillToTatto", fields: [bill_id], references: [bill_id], onDelete: Cascade)
+  tatto Tatto @relation("BillToTatto", fields: [tatto_id], references: [tatto_id], onDelete: Cascade)
+
+  @@id([bill_id, tatto_id])
+  @@map("bill_tatto")
 }
 
 model Payment {

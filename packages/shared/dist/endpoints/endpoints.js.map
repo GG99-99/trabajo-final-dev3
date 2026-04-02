@@ -1,0 +1,1 @@
+{"version":3,"file":"endpoints.js","sourceRoot":"","sources":["../../src/endpoints/endpoints.ts"],"names":[],"mappings":"AACA,MAAM,IAAI,GAAG,OAAO,CAAA;AACpB,MAAM,CAAC,MAAM,cAAc,GAAG;IAC1B,KAAK,EAAE,IAAI,GAAG,QAAQ;IACtB,QAAQ,EAAE,IAAI,GAAG,WAAW;CAC/B,CAAA"}

@@ -27,7 +27,15 @@
     "skipLibCheck": true,
 
     "esModuleInterop": true,   
-    "resolveJsonModule": true  
+    "resolveJsonModule": true ,
+
+    "baseUrl": ".",
+    "paths": {
+      "#backend/utils": ["src/utils/index.utils.ts"],
+      "#backend/middlewares": ["src/middlewares/index.middlewares.ts"],
+      "#prisma": ["src/lib/prisma.ts"],
+      "@prisma/*": ["./src/generated/prisma/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
