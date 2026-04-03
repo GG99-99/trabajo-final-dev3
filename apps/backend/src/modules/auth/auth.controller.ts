@@ -55,9 +55,9 @@ export const authController = {
         /********************
         |   CREAR RESPUESTA  |
          ********************/
-        const response: ApiResponse<Person> = {
+        const response: ApiResponse<boolean> = {
             ok: true,
-            data: await authService.register(personData),
+            data: true,
             error: null
         }
 
