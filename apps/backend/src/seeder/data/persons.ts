@@ -1,15 +1,7 @@
 
-export type SeedPerson = {
-  first_name: string
-  last_name: string
-  email: string
-  password: string
-  type: "client" | "worker" | "cashier"
-  specialty?: "realism" | "cartoon" | "other" // SOLO worker
-  medical_notes?: string // SOLO client
-}
+import { PersonForCreate } from "@final/shared"
 
-export const persons: SeedPerson[] = [
+export const persons: PersonForCreate[] = [
     {
       first_name: "Juan",
       last_name: "Perez",

@@ -13,7 +13,7 @@ await mainSeeder()
 
 // -------------------------------------------------------- //
 import { errorHandler } from "./handlers/errorHandler.js";
-import { router as appRouter } from "./app.router.js";
+import { router as apiRouter } from "./api.router.js";
 
 
 
@@ -37,7 +37,7 @@ app.get('/', (req: Request, res: Response) => {
 /******************
 |   ROUTER OF API  |
  ******************/
-app.use('/api', appRouter)
+app.use('/api', apiRouter)
 
 /******************
 |   ERROR HANDLER  |

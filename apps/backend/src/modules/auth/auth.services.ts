@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import  bcrypt  from 'bcrypt';
-import { ApiErr, LoginData, UserCredentials } from '@final/shared';
-import { authModel } from "./auth.model.js"
+import { ApiErr, LoginData, PersonForCreate, UserCredentials } from '@final/shared';
+// import { authModel } from "./auth.model.js"
 import { personService } from '../person/person.service.js';
 import jwt from 'jsonwebtoken';
 
@@ -22,6 +22,11 @@ export const authService = {
             person_id: user.person_id,
             type: user.type
         }
+    },
+
+    register: async (personData: PersonForCreate) => {
+        const newPerson = await personService.createPerson(personData)
+        return newPerson
     },
 
     createToken: (data: UserCredentials): string => (jwt.sign(data, process.env.SECRET_JWT_KEY!, {expiresIn: "1h"}) )
