@@ -1,14 +1,20 @@
 import prisma from "#prisma"
 import { PersonType } from "@prisma/index.js"
 import { PersonForCreate } from "@final/shared"
+import { PersonFilters } from "./person.interface.js"
 
 export const personModel = {
-    getPersonByEmail: async (email: string) => {
-        return await prisma.person.findUnique({
-            where: {email: email}
+    get: async (filters: PersonFilters) => {
+        return await prisma.person.findFirst({
+            where: {
+                ...(filters.person_id && { person_id: filters.person_id }),
+                ...(filters.email && { email: filters.email }),
+            },
+            ...(filters.noPass && { omit: { password: true } })
         })
     },
-    createPerson: async (personData: PersonForCreate) => {
+    
+    create: async (personData: PersonForCreate) => {
         // -- la password viene hasehada del servicio --
         const { type, specialty, medical_notes, ...personInfo } = personData
 
@@ -34,5 +40,5 @@ export const personModel = {
 
         return newPerson
 
-        },
+    },
 }

@@ -18,7 +18,7 @@
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
 
     // Recommended Options
     "strict": true,
@@ -34,7 +34,8 @@
       "#backend/utils": ["src/utils/index.utils.ts"],
       "#backend/middlewares": ["src/middlewares/index.middlewares.ts"],
       "#prisma": ["src/lib/prisma.ts"],
-      "@prisma/*": ["./src/generated/prisma/*"]
+      "@prisma/*": ["./src/generated/prisma/*"],
+      "#looger": ["./src/logger/logger.ts"]
     }
   },
   "include": ["src/**/*"],

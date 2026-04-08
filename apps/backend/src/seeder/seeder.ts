@@ -6,7 +6,7 @@ import { persons } from "./data/persons.js";
 /************
 |   SEEDERS  |
  ************/
-import { PersonForCreates } from "./seeders/PersonForCreates.js";
+import { PersonForCreates } from "./seeders/seedPersons.js";
 
 
 export async function mainSeeder() {

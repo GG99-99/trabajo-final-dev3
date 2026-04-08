@@ -5,9 +5,6 @@ CREATE TYPE "PersonType" AS ENUM ('client', 'cashier', 'worker');
 CREATE TYPE "WorkerSpecialty" AS ENUM ('realism', 'cartoon', 'other');
 
 -- CreateEnum
-CREATE TYPE "CashierSpecialty" AS ENUM ('realism', 'cartoon', 'other');
-
--- CreateEnum
 CREATE TYPE "PaymentMethod" AS ENUM ('cash', 'credit_card', 'transfer');
 
 -- CreateEnum
@@ -16,13 +13,16 @@ CREATE TYPE "StockMovementType" AS ENUM ('entry', 'exit', 'waste');
 -- CreateEnum
 CREATE TYPE "BillStatus" AS ENUM ('pending', 'partially', 'paid', 'cancelled', 'refunded');
 
+-- CreateEnum
+CREATE TYPE "AppointmentStatus" AS ENUM ('pending', 'completed', 'expired', 'cancelled');
+
 -- CreateTable
 CREATE TABLE "person" (
     "person_id" SERIAL NOT NULL,
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
+    "password" TEXT,
     "type" "PersonType" NOT NULL,
 
     CONSTRAINT "person_pkey" PRIMARY KEY ("person_id")
@@ -41,7 +41,6 @@ CREATE TABLE "worker" (
 CREATE TABLE "cashier" (
     "cashier_id" SERIAL NOT NULL,
     "person_id" INTEGER NOT NULL,
-    "specialty" "CashierSpecialty" NOT NULL,
 
     CONSTRAINT "cashier_pkey" PRIMARY KEY ("cashier_id")
 );
@@ -118,22 +117,22 @@ CREATE TABLE "img" (
 );
 
 -- CreateTable
-CREATE TABLE "tatto" (
-    "tatto_id" SERIAL NOT NULL,
+CREATE TABLE "tattoo" (
+    "tattoo_id" SERIAL NOT NULL,
     "img_id" INTEGER NOT NULL,
     "cost" DECIMAL(10,2) NOT NULL,
     "time" TIME NOT NULL,
 
-    CONSTRAINT "tatto_pkey" PRIMARY KEY ("tatto_id")
+    CONSTRAINT "tattoo_pkey" PRIMARY KEY ("tattoo_id")
 );
 
 -- CreateTable
-CREATE TABLE "tatto_material" (
+CREATE TABLE "tattoo_material" (
     "product_variant_id" INTEGER NOT NULL,
-    "tatto_id" INTEGER NOT NULL,
+    "tattoo_id" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL,
 
-    CONSTRAINT "tatto_material_pkey" PRIMARY KEY ("product_variant_id","tatto_id")
+    CONSTRAINT "tattoo_material_pkey" PRIMARY KEY ("product_variant_id","tattoo_id")
 );
 
 -- CreateTable
@@ -158,6 +157,14 @@ CREATE TABLE "bill_detail" (
 );
 
 -- CreateTable
+CREATE TABLE "bill_tattoo" (
+    "bill_id" INTEGER NOT NULL,
+    "tattoo_id" INTEGER NOT NULL,
+
+    CONSTRAINT "bill_tattoo_pkey" PRIMARY KEY ("bill_id","tattoo_id")
+);
+
+-- CreateTable
 CREATE TABLE "payment" (
     "payment_id" SERIAL NOT NULL,
     "bill_id" INTEGER NOT NULL,
@@ -167,6 +174,97 @@ CREATE TABLE "payment" (
     "transaction_ref" TEXT NOT NULL,
 
     CONSTRAINT "payment_pkey" PRIMARY KEY ("payment_id")
+);
+
+-- CreateTable
+CREATE TABLE "seat" (
+    "seat_id" SERIAL NOT NULL,
+    "seat_code" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "is_deleted" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "seat_pkey" PRIMARY KEY ("seat_id")
+);
+
+-- CreateTable
+CREATE TABLE "schedule" (
+    "schedule_id" SERIAL NOT NULL,
+    "worker_id" INTEGER NOT NULL,
+    "seat_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "monday" JSONB NOT NULL,
+    "tuesday" JSONB NOT NULL,
+    "wednesday" JSONB NOT NULL,
+    "thursday" JSONB NOT NULL,
+    "friday" JSONB NOT NULL,
+    "saturday" JSONB NOT NULL,
+    "sunday" JSONB NOT NULL,
+    "valid_until" DATE,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "schedule_pkey" PRIMARY KEY ("schedule_id")
+);
+
+-- CreateTable
+CREATE TABLE "exceptions" (
+    "exceptions_id" SERIAL NOT NULL,
+    "schedule_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "scheduled" JSONB,
+    "is_deleted" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "exceptions_pkey" PRIMARY KEY ("exceptions_id")
+);
+
+-- CreateTable
+CREATE TABLE "appointment" (
+    "appointment_id" SERIAL NOT NULL,
+    "worker_id" INTEGER NOT NULL,
+    "client_id" INTEGER NOT NULL,
+    "tattoo_id" INTEGER NOT NULL,
+    "start" TEXT NOT NULL,
+    "end" TEXT NOT NULL,
+    "date" DATE NOT NULL,
+    "create_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "is_deleted" BOOLEAN NOT NULL DEFAULT false,
+    "status" "AppointmentStatus" NOT NULL DEFAULT 'pending',
+
+    CONSTRAINT "appointment_pkey" PRIMARY KEY ("appointment_id")
+);
+
+-- CreateTable
+CREATE TABLE "attendance" (
+    "attendance_id" SERIAL NOT NULL,
+    "status" BOOLEAN NOT NULL DEFAULT true,
+    "day" TEXT NOT NULL,
+    "work_date" TIMESTAMP(3) NOT NULL,
+    "is_deleted" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "attendance_pkey" PRIMARY KEY ("attendance_id")
+);
+
+-- CreateTable
+CREATE TABLE "assist" (
+    "worker_id" INTEGER NOT NULL,
+    "attendance_id" INTEGER NOT NULL,
+    "start" TIMESTAMP(3) NOT NULL,
+    "close" TIMESTAMP(3),
+    "alert" BOOLEAN NOT NULL DEFAULT false,
+    "alert_text" TEXT,
+    "is_deleted" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "assist_pkey" PRIMARY KEY ("worker_id","attendance_id")
+);
+
+-- CreateTable
+CREATE TABLE "no_assist" (
+    "no_assist_id" SERIAL NOT NULL,
+    "attendance_id" INTEGER NOT NULL,
+    "worker_id" INTEGER NOT NULL,
+    "create_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "is_deleted" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "no_assist_pkey" PRIMARY KEY ("no_assist_id")
 );
 
 -- CreateIndex
@@ -180,6 +278,9 @@ CREATE UNIQUE INDEX "cashier_person_id_key" ON "cashier"("person_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "client_person_id_key" ON "client"("person_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "no_assist_attendance_id_key" ON "no_assist"("attendance_id");
 
 -- AddForeignKey
 ALTER TABLE "worker" ADD CONSTRAINT "worker_person_id_fkey" FOREIGN KEY ("person_id") REFERENCES "person"("person_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -203,13 +304,13 @@ ALTER TABLE "inventory_item" ADD CONSTRAINT "inventory_item_product_variant_id_f
 ALTER TABLE "stock_movement" ADD CONSTRAINT "stock_movement_inventory_item_id_fkey" FOREIGN KEY ("inventory_item_id") REFERENCES "inventory_item"("inventory_item_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tatto" ADD CONSTRAINT "tatto_img_id_fkey" FOREIGN KEY ("img_id") REFERENCES "img"("img_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "tattoo" ADD CONSTRAINT "tattoo_img_id_fkey" FOREIGN KEY ("img_id") REFERENCES "img"("img_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tatto_material" ADD CONSTRAINT "tatto_material_product_variant_id_fkey" FOREIGN KEY ("product_variant_id") REFERENCES "product_variant"("product_variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "tattoo_material" ADD CONSTRAINT "tattoo_material_product_variant_id_fkey" FOREIGN KEY ("product_variant_id") REFERENCES "product_variant"("product_variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tatto_material" ADD CONSTRAINT "tatto_material_tatto_id_fkey" FOREIGN KEY ("tatto_id") REFERENCES "tatto"("tatto_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "tattoo_material" ADD CONSTRAINT "tattoo_material_tattoo_id_fkey" FOREIGN KEY ("tattoo_id") REFERENCES "tattoo"("tattoo_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "bill" ADD CONSTRAINT "bill_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "client"("client_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -227,4 +328,49 @@ ALTER TABLE "bill_detail" ADD CONSTRAINT "bill_detail_bill_id_fkey" FOREIGN KEY 
 ALTER TABLE "bill_detail" ADD CONSTRAINT "bill_detail_stock_movement_id_fkey" FOREIGN KEY ("stock_movement_id") REFERENCES "stock_movement"("stock_movement") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "bill_tattoo" ADD CONSTRAINT "bill_tattoo_bill_id_fkey" FOREIGN KEY ("bill_id") REFERENCES "bill"("bill_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bill_tattoo" ADD CONSTRAINT "bill_tattoo_tattoo_id_fkey" FOREIGN KEY ("tattoo_id") REFERENCES "tattoo"("tattoo_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "payment" ADD CONSTRAINT "payment_bill_id_fkey" FOREIGN KEY ("bill_id") REFERENCES "bill"("bill_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "schedule" ADD CONSTRAINT "schedule_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "worker"("worker_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "schedule" ADD CONSTRAINT "schedule_seat_id_fkey" FOREIGN KEY ("seat_id") REFERENCES "seat"("seat_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "exceptions" ADD CONSTRAINT "exceptions_schedule_id_fkey" FOREIGN KEY ("schedule_id") REFERENCES "schedule"("schedule_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "appointment" ADD CONSTRAINT "appointment_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "worker"("worker_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "appointment" ADD CONSTRAINT "appointment_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "client"("client_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "appointment" ADD CONSTRAINT "appointment_tattoo_id_fkey" FOREIGN KEY ("tattoo_id") REFERENCES "tattoo"("tattoo_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "assist" ADD CONSTRAINT "assist_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "worker"("worker_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "assist" ADD CONSTRAINT "assist_attendance_id_fkey" FOREIGN KEY ("attendance_id") REFERENCES "attendance"("attendance_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "no_assist" ADD CONSTRAINT "no_assist_attendance_id_fkey" FOREIGN KEY ("attendance_id") REFERENCES "attendance"("attendance_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "no_assist" ADD CONSTRAINT "no_assist_worker_id_fkey" FOREIGN KEY ("worker_id") REFERENCES "worker"("worker_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+
+
+/*********************
+|   CHECK CONSTRAINT  |
+ *********************/
+ CREATE UNIQUE INDEX "schedule_worker_id_active_unique"
+ON "schedule" ("worker_id")
+WHERE "active" = true;

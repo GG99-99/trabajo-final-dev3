@@ -9,11 +9,11 @@ export const authService = {
     login: async (userData: LoginData): Promise<UserCredentials> => {
 
         // buscar usuarios
-        const user = await personService.getPersonByEmail(userData.email)
+        const user = await personService.get({email: userData.email, noPass: false})
         if(!user) throw({statusCode: 401, name: 'InvalidCredentials', message: 'credenciales invalidas'} as ApiErr)
 
         // validar clave
-        const validPassword = await bcrypt.compare(userData.password, user.password)
+        const validPassword = await bcrypt.compare(userData.password, user.password!)
         if(!validPassword) throw({statusCode: 401, name: 'InvalidCredentials', message: 'credenciales invalidas'} as ApiErr)
 
 
@@ -25,7 +25,7 @@ export const authService = {
     },
 
     register: async (personData: PersonForCreate) => {
-        const newPerson = await personService.createPerson(personData)
+        const newPerson = await personService.create(personData)
         return newPerson
     },
 

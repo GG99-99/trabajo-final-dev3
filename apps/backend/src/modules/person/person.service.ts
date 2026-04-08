@@ -1,17 +1,26 @@
 import bcrypt  from 'bcrypt';
 import { personModel } from "./person.model.js"
-import { ApiErr, PersonForCreate } from "@final/shared"
+import { ApiErr,  PersonForCreate } from "@final/shared"
+import { PersonFilters } from './person.interface.js';
 
 
 export const personService = {
-    getPersonByEmail: async (email: string) => {
-        return await personModel.getPersonByEmail(email)
+    /*********
+    |   READ  |
+     *********/
+    get: async (filters: PersonFilters) => {
+        return await personModel.get({person_id: filters.person_id, email: filters.email, noPass: filters.noPass})
     },
-    createPerson: async (personData: PersonForCreate) => {
+    
+
+    /***********
+    |   CREATE  |
+     ***********/
+    create: async (personData: PersonForCreate) => {
         /*************************************
         |   BUSCAR QUE EL EMAIL NO EXISTA YA  |
          *************************************/
-        if( await personService.getPersonByEmail(personData.email)){
+        if( await personService.get({email: personData.email, noPass: true})){
             throw({
                 statusCode: 409, 
                 name: "EmailAlreadyExist", 
@@ -24,12 +33,14 @@ export const personService = {
          ******************/
         const hashPassword = await bcrypt.hash(personData.password, 10)
         personData.password = hashPassword
+        
+        
 
         
         /******************
         |   CREAR PERSONA  |
          ******************/
-        const newPerson = await personModel.createPerson(personData)
+        const newPerson = await personModel.create(personData)
         return newPerson
     }
 }

@@ -1,16 +1,15 @@
 import { Router } from "express";
 import { authController } from "./auth.controller.js";
-import { AUTH_ENDPOINTS } from "@final/shared";
+// import { AUTH_ENDPOINTS } from "@final/shared";
 
 export const authRouter: Router = Router()
 
 authRouter
 .post(
-    AUTH_ENDPOINTS.LOGIN,
+    '/login',
     authController.login
 )
-
-authRouter.post(
-    AUTH_ENDPOINTS.REGISTER,
+.post(
+    '/register',
     authController.register
 )
