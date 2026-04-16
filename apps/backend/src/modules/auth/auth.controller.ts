@@ -1,7 +1,7 @@
 import { Request, Response} from 'express';
 import { authService } from "./auth.services.js"
-import { UserCredentials, ApiResponse, PersonForCreate, LoginData } from '@final/shared';
-import { Person } from '@prisma/index.js';
+import { UserCredentials, ApiResponse, CreatePerson, LoginData } from '@final/shared';
+// import { Person } from '@final/db';
 
 export const authController = {
     login: async (req: Request, res: Response) => {
@@ -49,7 +49,7 @@ export const authController = {
         /***********************************
         |   OBTENER DATA  DEL REQUEST BODY  |
          ***********************************/
-        const personData: PersonForCreate = req.body
+        const personData: CreatePerson = req.body
 
 
         /********************

@@ -1,10 +1,10 @@
-import prisma from "#prisma"
-import { PersonType } from "@prisma/index.js"
-import { PersonForCreate } from "@final/shared"
-import { PersonFilters } from "./person.interface.js"
+import prisma from "@final/db"
+import { PersonType } from "@final/db"
+import { CreatePerson } from "@final/shared"
+import { GetPerson } from "@final/shared"
 
 export const personModel = {
-    get: async (filters: PersonFilters) => {
+    get: async (filters: GetPerson) => {
         return await prisma.person.findFirst({
             where: {
                 ...(filters.person_id && { person_id: filters.person_id }),
@@ -14,7 +14,7 @@ export const personModel = {
         })
     },
     
-    create: async (personData: PersonForCreate) => {
+    create: async (personData: CreatePerson) => {
         // -- la password viene hasehada del servicio --
         const { type, specialty, medical_notes, ...personInfo } = personData
 

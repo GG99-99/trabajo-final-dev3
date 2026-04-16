@@ -1,6 +1,6 @@
+import './env.js'
 import express from "express";
 import { Request, Response } from "express";
-import 'dotenv/config'
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan'; 
 

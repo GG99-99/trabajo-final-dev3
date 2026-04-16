@@ -1,7 +1,7 @@
-import type { PersonForCreate } from "../person/person.type.js"
+import type { CreatePerson } from "../person/person.type.js"
 import type { Override } from "../index.types.js"
 
-export type CashierCreate = Override<PersonForCreate, {type: "cashier"}> 
+export type CashierCreate = Override<CreatePerson, {type: "cashier"}> 
 
 
 export type CashierWithPerson = {

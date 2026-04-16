@@ -1,4 +1,7 @@
 export type ScheduleDayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+/************
+|   OBJECTS  |
+ ************/
 export type ScheduleJsonDay = {
     start: string;
     end: string;
@@ -8,7 +11,18 @@ export type ScheduleJsonDay = {
         end: string;
     }[];
 };
-export type ScheduleCreate = {
+/*****************
+|   READ METHODS  |
+ *****************/
+export type GetManySchedules = {
+    worker_id?: number;
+    seat_id?: number;
+    active?: boolean;
+};
+/*******************
+|   CREATE METHODS  |
+ *******************/
+export type CreateSchedule = {
     worker_id: number;
     seat_id: number;
     monday: ScheduleJsonDay;

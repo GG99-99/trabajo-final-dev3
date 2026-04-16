@@ -1,7 +1,7 @@
 
-import { PersonForCreate } from "@final/shared"
+import { CreatePerson } from "@final/shared"
 
-export const persons: PersonForCreate[] = [
+export const persons: CreatePerson[] = [
     {
       first_name: "Juan",
       last_name: "Perez",

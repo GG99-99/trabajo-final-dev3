@@ -11,4 +11,5 @@ import { PersonForCreates } from "./seeders/seedPersons.js";
 
 export async function mainSeeder() {
     await PersonForCreates(persons)
+    console.log("[ seeder ] personas creadas")
 }

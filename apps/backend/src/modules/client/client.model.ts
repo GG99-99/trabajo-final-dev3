@@ -1,4 +1,5 @@
-import prisma from "#prisma"
+import prisma from "@final/db"
+import { ClientWithRelations } from "@final/shared"
 
 export const clientModel = {
     /*********
@@ -10,7 +11,7 @@ export const clientModel = {
         })
     },
 
-    getAll: async () => {
+    getMany: async (): Promise<ClientWithRelations[]> => {
         return await prisma.client.findMany({
             include: {person: true}
         })

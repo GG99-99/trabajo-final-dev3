@@ -1,4 +1,4 @@
-import prisma from "#prisma";
+import prisma from "@final/db";
 
 
 export const workerModel = {
@@ -8,7 +8,7 @@ export const workerModel = {
             include: {person: true}
         })
     },
-    getAll: async () => {
+    getMany: async () => {
         return await prisma.worker.findMany({
             include: {person: true}
         })

@@ -1,12 +1,12 @@
-import prisma from "#prisma"
+import prisma from "@final/db"
 import bcrypt from "bcrypt"
-import { PersonForCreate } from "@final/shared"
-import { PersonType } from "@prisma/index.js"
+import { CreatePerson } from "@final/shared"
+import { PersonType } from "@final/db"
 
 
 const SALT_ROUNDS = 10
 
-export async function PersonForCreates(data: PersonForCreate[]) {
+export async function PersonForCreates(data: CreatePerson[]) {
   for (const personData of data) {
     const { type, specialty, medical_notes, password, ...personInfo } = personData
 

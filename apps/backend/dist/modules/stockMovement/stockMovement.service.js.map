@@ -1,0 +1,1 @@
+{"version":3,"file":"stockMovement.service.js","sourceRoot":"","sources":["../../../src/modules/stockMovement/stockMovement.service.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,kBAAkB,EAAE,MAAM,0BAA0B,CAAC;AAG9D,MAAM,CAAC,MAAM,oBAAoB,GAAG;IAChC,GAAG,EAAE,KAAK,EAAE,OAAgC,EAAE,EAAE;QAC5C,OAAO,MAAM,kBAAkB,CAAC,GAAG,CAAC,OAAO,CAAC,CAAA;IAChD,CAAC;CACJ,CAAA"}

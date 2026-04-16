@@ -1,0 +1,486 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider  = "prisma-client-js"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  
+  // output    = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+
+
+/**********
+|   ENUMS  |
+ **********/
+
+
+enum PersonType {
+  client
+  cashier
+  worker
+}
+
+enum WorkerSpecialty {
+  realism
+  cartoon
+  other
+}
+
+enum PaymentMethod {
+  cash
+  credit_card
+  transfer
+}
+
+enum StockMovementType {
+  entry
+  exit
+  waste
+}
+
+enum BillStatus {
+  pending
+  partially
+  paid
+  cancelled
+  refunded
+}
+
+enum AppointmentStatus {
+  pending
+  completed
+  expired
+  cancelled
+}
+
+/****************
+|   CORE TABLES  |
+ ****************/
+
+model Person {
+  person_id  Int        @id @default(autoincrement())
+  first_name String
+  last_name  String
+  email      String     @unique
+  password   String?
+  type       PersonType
+
+  // Relations
+  worker  Worker?
+  cashier Cashier?
+  client  Client?
+
+  @@map("person")
+}
+
+/***************
+|   USER ROLES  |
+ ***************/
+
+model Worker {
+  worker_id Int             @id @default(autoincrement())
+  person_id Int             @unique
+  specialty WorkerSpecialty
+
+  // Relations
+  person       Person        @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
+  bills        Bill[]
+  schedules    Schedule[]
+  appointments Appointment[]
+  assists      Assist[]
+  noAssists    NoAssist[]
+
+  @@map("worker")
+}
+
+model Cashier {
+  cashier_id Int @id @default(autoincrement())
+  person_id  Int @unique
+
+  // Relations
+  person Person @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
+  bills  Bill[]
+
+  @@map("cashier")
+}
+
+model Client {
+  client_id     Int     @id @default(autoincrement())
+  person_id     Int     @unique
+  medical_notes String?
+
+  // Relations
+  person       Person        @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
+  bills        Bill[]
+  appointments Appointment[]
+
+  @@map("client")
+}
+
+
+/*************************
+|   PRODUCTS & INVENTORY  |
+ *************************/
+
+model Category {
+  category_id Int     @id @default(autoincrement())
+  name        String
+  description String?
+
+  // Relations
+  products Product[]
+
+  @@map("category")
+}
+
+model Provider {
+  provider_id   Int @id @default(autoincrement())
+  name          String
+  code          String
+  phone_number  String
+  address       String
+
+  products      Product[]
+
+  @@map("provider")
+}
+
+model Product {
+  product_id  Int    @id @default(autoincrement())
+  category_id Int
+  provider_id Int
+  name        String
+  brand       String
+
+  // Relations
+  provider Provider         @relation(fields: [provider_id], references: [provider_id], onDelete: Cascade)
+  category Category         @relation(fields: [category_id], references: [category_id], onDelete: Cascade)
+  variants ProductVariant[]
+
+  @@map("product")
+}
+
+model ProductVariant {
+  product_variant_id Int     @id @default(autoincrement())
+  product_id         Int
+  presentation       String
+  min_stock_level    Int
+  price              Decimal @db.Decimal(10, 2)
+  unit               String
+
+  // Relations
+  product        Product         @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  inventoryItems InventoryItem[]
+  tattooMaterials TattooMaterial[]
+
+  @@map("product_variant")
+}
+
+model InventoryItem {
+  inventory_item_id  Int       @id @default(autoincrement())
+  product_variant_id Int
+  batch_number       String
+  current_quantity   Int
+  expiry_date        DateTime?
+
+  // Relations
+  productVariant ProductVariant  @relation(fields: [product_variant_id], references: [product_variant_id], onDelete: Cascade)
+  stockMovements StockMovement[]
+
+  @@map("inventory_item")
+}
+
+/*********************
+|   STOCK MANAGEMENT  |
+ *********************/
+
+model StockMovement {
+  stock_movement_id    Int               @id @default(autoincrement())
+  inventory_item_id Int
+  type              StockMovementType
+  quantity          Decimal           @db.Decimal(10, 2)
+  reason            String?
+  create_at         DateTime          @default(now())
+
+  // Relations
+  inventoryItem InventoryItem @relation(fields: [inventory_item_id], references: [inventory_item_id], onDelete: Cascade)
+  billDetails   BillDetail[]
+
+  @@map("stock_movement")
+}
+
+/*******************
+|   TATTOO DESIGNS  |
+ *******************/
+
+model Img {
+  img_id      Int     @id @default(autoincrement())
+  source      Bytes   @db.ByteA
+  description String?
+  create_at   DateTime          @default(now())
+  active      Boolean           @default(true)
+
+  // Relations
+  tattoos Tattoo[]
+
+  @@map("img")
+}
+
+model Tattoo {
+  tattoo_id Int      @id @default(autoincrement())
+  img_id   Int
+  cost     Decimal  @db.Decimal(10, 2)
+  time     DateTime @db.Time
+  name     String
+
+  // Relations
+  img          Img             @relation(fields: [img_id], references: [img_id], onDelete: Cascade)
+  materials    TattooMaterial[]
+  billTattoos   BillTattoo[]     @relation("BillToTattoo")
+  appointments Appointment[]
+
+  @@map("tattoo")
+}
+
+model TattooMaterial {
+  product_variant_id Int
+  tattoo_id           Int
+  quantity           Int
+
+  // Relations
+  productVariant ProductVariant @relation(fields: [product_variant_id], references: [product_variant_id], onDelete: Cascade)
+  tattoo          Tattoo          @relation(fields: [tattoo_id], references: [tattoo_id], onDelete: Cascade)
+
+  @@id([product_variant_id, tattoo_id])
+  @@map("tattoo_material")
+}
+
+/***********************
+|   BILLING & PAYMENTS  |
+ ***********************/
+
+model Bill {
+  bill_id    Int        @id @default(autoincrement())
+  client_id  Int
+  worker_id  Int
+  cashier_id Int
+  create_at  DateTime   @default(now())
+  status     BillStatus @default(pending)
+
+  // Relations
+  client      Client       @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
+  worker      Worker       @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
+  cashier     Cashier      @relation(fields: [cashier_id], references: [cashier_id], onDelete: Cascade)
+  details     BillDetail[]
+  tattoos     BillTattoo[]  @relation("BillToTattoo")
+  payments    Payment[]
+  discounts   BillDiscount[]
+  aggregates  BillAggregate[]
+
+  @@map("bill")
+}
+
+model BillDetail {
+  bill_detail_id    Int @id @default(autoincrement())
+  bill_id           Int
+  stock_movement_id Int
+
+  // Relations
+  bill          Bill          @relation(fields: [bill_id], references: [bill_id], onDelete: Cascade)
+  stockMovement StockMovement @relation(fields: [stock_movement_id], references: [stock_movement_id], onDelete: Cascade)
+
+  @@map("bill_detail")
+}
+
+model BillTattoo {
+  bill_id  Int
+  tattoo_id Int
+
+  // Relations
+  bill  Bill  @relation("BillToTattoo", fields: [bill_id], references: [bill_id], onDelete: Cascade)
+  tattoo Tattoo @relation("BillToTattoo", fields: [tattoo_id], references: [tattoo_id], onDelete: Cascade)
+
+  @@id([bill_id, tattoo_id])
+  @@map("bill_tattoo")
+}
+
+model BillDiscount {
+  bill_discount_id  Int         @id @default(autoincrement())
+  bill_id           Int
+  amount            Decimal     @db.Decimal(10, 2)
+  reason            String
+
+  //Relations
+  bill              Bill          @relation(fields: [bill_id], references: [bill_id], onDelete: Cascade)
+
+  @@map("bill_discount")
+}
+
+
+model BillAggregate {
+  bill_aggregate_id  Int          @id @default(autoincrement())
+  bill_id           Int
+  amount            Decimal       @db.Decimal(10, 2)
+  reason            String
+
+
+  // Relations
+  bill              Bill          @relation(fields: [bill_id], references: [bill_id], onDelete: Cascade)
+
+  @@map("bill_aggregate")
+}
+
+
+model Payment {
+  payment_id      Int           @id @default(autoincrement())
+  bill_id         Int
+  create_at       DateTime      @default(now())
+  amount          Decimal       @db.Decimal(10, 2)
+  method          PaymentMethod
+  transaction_ref String
+
+  // Relations
+  bill Bill @relation(fields: [bill_id], references: [bill_id], onDelete: Cascade)
+
+  @@map("payment")
+}
+
+/*********************
+|   SEATS & SCHEDULE  |
+ *********************/
+
+model Seat {
+  seat_id    Int      @id @default(autoincrement())
+  seat_code  String
+  created_at DateTime @default(now())
+  is_deleted Boolean  @default(false)
+
+  // Relations
+  schedules Schedule[]
+
+  @@map("seat")
+}
+
+/// Un schedule representa la semana laboral habitual de un worker en un seat.
+/// Cada día almacena un JSON con los bloques horarios (ej: {start:"09:00", end:"18:00"}).
+/// valid_until null significa que el schedule sigue activo.
+model Schedule {
+  schedule_id Int       @id @default(autoincrement())
+  worker_id   Int
+  seat_id     Int
+  created_at  DateTime  @default(now())
+  monday      Json
+  tuesday     Json
+  wednesday   Json
+  thursday    Json
+  friday      Json
+  saturday    Json
+  sunday      Json
+  valid_until DateTime? @db.Date
+  active      Boolean   @default(true)
+
+  // Relations
+  worker     Worker      @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
+  seat       Seat        @relation(fields: [seat_id], references: [seat_id], onDelete: Cascade)
+  exceptions Exception[]
+
+  @@map("schedule")
+}
+
+/// Excepciones puntuales al schedule habitual (días festivos, permisos, horarios especiales).
+model Exception {
+  exceptions_id Int      @id @default(autoincrement())
+  schedule_id   Int
+  created_at    DateTime @default(now())
+  scheduled     Json?
+  is_deleted    Boolean  @default(false)
+
+  // Relations
+  schedule Schedule @relation(fields: [schedule_id], references: [schedule_id], onDelete: Cascade)
+
+  @@map("exceptions")
+}
+
+/*********************
+|   APPOINTMENTS      |
+ *********************/
+
+model Appointment {
+  appointment_id Int      @id @default(autoincrement())
+  worker_id      Int
+  client_id      Int
+  tattoo_id       Int
+  start          String
+  end            String
+  date           DateTime @db.Date
+  create_at      DateTime @default(now())
+  is_deleted     Boolean  @default(false)
+  status         AppointmentStatus @default(pending)
+
+
+  // Relations
+  worker Worker @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
+  client Client @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
+  tattoo  Tattoo  @relation(fields: [tattoo_id], references: [tattoo_id], onDelete: Cascade)
+
+  @@map("appointment")
+}
+
+/*********************
+|   ATTENDANCE        |
+ *********************/
+
+/// Registro de jornada laboral diaria (un registro por día de trabajo).
+model Attendance {
+  attendance_id Int      @id @default(autoincrement())
+  status        Boolean  @default(true)
+  day           String
+  work_date     DateTime
+  is_deleted    Boolean  @default(false)
+
+  // Relations
+  assists   Assist[]
+  noAssists NoAssist[]
+
+  @@map("attendance")
+}
+
+/// Registro de entrada/salida del worker en una jornada concreta.
+model Assist {
+  worker_id     Int
+  attendance_id Int
+  start         DateTime
+  close         DateTime?
+  alert         Boolean   @default(false)
+  alert_text    String?
+  is_deleted    Boolean   @default(false)
+
+  // Relations
+  worker     Worker     @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
+  attendance Attendance @relation(fields: [attendance_id], references: [attendance_id], onDelete: Cascade)
+
+  @@id([worker_id, attendance_id])
+  @@map("assist")
+}
+
+/// Registro de ausencia de un worker en una jornada concreta.
+model NoAssist {
+  no_assist_id  Int      @id @default(autoincrement())
+  attendance_id Int      @unique
+  worker_id     Int
+  create_at     DateTime @default(now())
+  is_deleted    Boolean  @default(false)
+
+  // Relations
+  attendance Attendance @relation(fields: [attendance_id], references: [attendance_id], onDelete: Cascade)
+  worker     Worker     @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
+
+  @@map("no_assist")
+}

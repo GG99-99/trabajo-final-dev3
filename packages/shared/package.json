@@ -2,17 +2,17 @@
   "name": "@final/shared",
   "version": "1.0.0",
   "type": "module",
-
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-  }},
-
+    }
+  },
   "description": "",
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -20,6 +20,10 @@
   "license": "ISC",
   "packageManager": "pnpm@10.27.0",
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@final/db": "workspace:*"
   }
 }

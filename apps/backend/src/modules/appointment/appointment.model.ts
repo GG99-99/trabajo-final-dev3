@@ -1,13 +1,13 @@
-import prisma from "#prisma";
-import { AppointmentStatus } from "@prisma/index.js";
-import { AppointmentFilters } from "./appointment.interfaces.js";
+import prisma from "@final/db";
+import { AppointmentStatus } from "@final/db";
+import { GetAppointmentFilters, CreateAppointment } from "@final/shared";
 
 export const appointmentModel = {
 
     /*********
     |   READ  |
      *********/
-    getMany: async (filters: AppointmentFilters) => {
+    getMany: async (filters: GetAppointmentFilters) => {
         return await prisma.appointment.findMany({
             where: {
                 ...(filters.appointment_id  && {appointment_id: filters.appointment_id}),
@@ -32,6 +32,15 @@ export const appointmentModel = {
             data: {
                 status
             }
+        })
+    },
+
+    /***********
+    |   CREATE  |
+     ***********/
+    create: async (data: CreateAppointment) => {
+        return await prisma.appointment.create({
+            data: {...data}
         })
     }
 

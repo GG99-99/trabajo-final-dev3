@@ -1,8 +1,8 @@
 
 
-/********************
-|   BODY OF REQUEST  |
- ********************/
+/****************
+|   POST METHOD  |
+ ****************/
 // el tipo  de la data que se debe enviar al backend para hacer el login
 export type LoginData = {
     email: string;
