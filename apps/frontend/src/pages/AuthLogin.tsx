@@ -4,14 +4,13 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import heroImg from '@/assets/hero.png'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button } from '@/componentes/ui/button'
 import { authService } from '@/lib/auth.service'
 import { useAuth } from '@/context/AuthContext'
 import { useState } from 'react'
 
 const schema = yup.object({
   email: yup.string().email('Invalid email format').required('Email is required'),
-  password: yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
+  password: yup.string().required('Password is required'),
 }).required()
 
 type FormData = yup.InferType<typeof schema>
@@ -160,14 +159,12 @@ export default function Login() {
                   Unregistered?
                 </p>
 
-                <Button
-                  type="button"
-                  asChild
-                  variant="ghost"
+                <Link
+                  to="/register"
                   className="flex h-[56px] w-full items-center justify-center border border-white/10 bg-transparent text-[9px] font-bold uppercase tracking-[0.35em] text-white/40 transition-all hover:border-white/25 hover:text-white/70 hover:bg-white/3 rounded-sm"
                 >
-                  <Link to="/register">Apply for Membership</Link>
-                </Button>
+                  Apply for Membership
+                </Link>
               </div>
             </form>
           </div>
