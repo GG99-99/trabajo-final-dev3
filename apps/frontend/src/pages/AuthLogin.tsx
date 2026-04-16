@@ -2,131 +2,152 @@ import Icon from '@/componentes/Icon'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import heroImg from '@/assets/hero.png'
+import { Link, useNavigate } from 'react-router-dom'
+import { Button } from '@/componentes/ui/button'
+import { authService } from '@/lib/auth.service'
+import { useAuth } from '@/context/AuthContext'
+import { useState } from 'react'
 
 const schema = yup.object({
-  email: yup.string().email('Invalid vault format').required('Email is required'),
-  password: yup.string().min(8, 'Key too short').required('Secret key is required'),
+  email: yup.string().email('Invalid email format').required('Email is required'),
+  password: yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
 }).required()
 
-export default function Login() {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm({ resolver: yupResolver(schema) })
+type FormData = yup.InferType<typeof schema>
 
-  const onSubmit = async (data) => {
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    console.log('Vault Access:', data)
+export default function Login() {
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: yupResolver(schema)
+  })
+  const { setUser } = useAuth()
+  const navigate = useNavigate()
+  const [apiError, setApiError] = useState<string | null>(null)
+
+  const onSubmit = async (data: FormData) => {
+    setApiError(null)
+    const res = await authService.login(data)
+    if (!res.ok) {
+      setApiError(res.error.message)
+      return
+    }
+    setUser(res.data)
+    // redirect based on role
+    if (res.data.type === 'cashier') navigate('/cashier/pos')
+    else navigate('/admin')
   }
 
   return (
-    <div className="min-h-screen bg-[#08090b] flex items-center justify-center p-4 text-white selection:bg-[#ff5a66]/30">
-      {/* 1. Fondo Global con Ruido/Grid sutil */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 40V39L0 39V40zm40-40V0L39 0V40H40V0z'/%3E%3C/g%3E%3C/svg%3E")` }} 
-      />
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-0 selection:bg-[#ff5a66]/20">
+      <div className="relative flex w-full h-screen overflow-hidden">
 
-      <div className="relative mx-auto flex min-h-[750px] w-full max-w-6xl overflow-hidden rounded-sm border border-white/5 bg-[#0c0d10] shadow-[0_0_100px_rgba(0,0,0,0.8)]">
-        
-        {/* SECCIÓN IZQUIERDA: HERO ART */}
-        <div className="relative hidden w-[60%] overflow-hidden md:block border-r border-white/5">
+        {/* LEFT PANEL */}
+        <div className="relative hidden lg:block lg:w-[60%] bg-black overflow-hidden">
           <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-            style={{
-              backgroundImage: `linear-gradient(to bottom, rgba(8,9,11,0.1), rgba(8,9,11,0.9)), url('/login-art.jpg')`,
-            }}
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroImg})`, filter: 'grayscale(30%) brightness(0.7)' }}
           />
-          
-          {/* Overlay de Scanline/Grid */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px]" />
+          <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/30 to-black/90" />
+          <div className="absolute inset-0 bg-linear-to-r from-black/20 via-transparent to-black/60" />
 
-          <div className="absolute inset-0 flex flex-col justify-end p-12">
+          <div className="absolute bottom-12 left-12 z-10">
             <h1
-              className="max-w-[500px] text-[72px] font-light uppercase italic leading-[0.85] tracking-tighter lg:text-[90px]"
+              className="text-[90px] font-light uppercase italic leading-[0.88] tracking-tight"
               style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}
             >
-              <span className="block text-white/90">Obsidian</span>
-              <span className="bg-gradient-to-r from-[#ff5a66] to-[#ff8e97] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,90,102,0.3)]">
-                Archive
-              </span>
+              <span className="block text-[#ff5a66] drop-shadow-[0_0_40px_rgba(255,90,102,0.5)]">Obsidian</span>
+              <span className="block text-[#ff5a66] drop-shadow-[0_0_40px_rgba(255,90,102,0.5)]">Archive</span>
             </h1>
-            <div className="mt-8 h-px w-24 bg-[#ff5a66]/50" />
-            <p className="mt-8 max-w-[400px] text-[11px] uppercase tracking-[0.4em] leading-relaxed text-white/40">
-              Permanence. Precision. <br />
-              <span className="text-white/60">The digital sanctuary for high-end somatic art.</span>
+            <div className="mt-8 h-px w-20 bg-white/20" />
+            <p className="mt-6 text-[10px] uppercase tracking-[0.4em] leading-relaxed text-white/40 max-w-[340px]">
+              Permanence. Precision. The digital<br />sanctuary for high-end somatic art.
             </p>
           </div>
         </div>
 
-        {/* SECCIÓN DERECHA: FORMULARIO */}
-        <div className="relative flex w-full flex-col justify-between bg-[#0e0f12] p-8 md:w-[40%] lg:p-16">
-          
-          {/* Detalles decorativos */}
-          <div className="absolute top-0 right-0 p-4 opacity-20 text-[10px] font-mono tracking-widest uppercase">
-            v.2.0.26 // secure_access
+        {/* RIGHT PANEL */}
+        <div className="relative w-full lg:w-[40%] bg-[#1a1a1a] flex flex-col justify-between px-8 py-12 lg:px-16">
+          <div className="absolute top-6 right-6 text-[9px] font-mono tracking-[0.2em] uppercase text-white/10">
+            © 2026 Obsidian
           </div>
 
-          <div className="mt-12">
-            <h2 className="text-[32px] font-light tracking-tight text-white/90" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              Welcome back.
-            </h2>
-            <p className="mt-2 text-[13px] text-white/30 tracking-wide font-light">
-              Enter your credentials to access the studio.
-            </p>
+          <div className="flex-1 flex flex-col justify-center max-w-md">
+            <div className="mb-12">
+              <h2
+                className="text-[42px] font-light tracking-tight text-white/95 leading-tight"
+                style={{ fontFamily: 'Cormorant Garamond, serif' }}
+              >
+                Welcome back.
+              </h2>
+              <p className="mt-2 text-[13px] text-white/40 tracking-wide font-light">
+                Enter your credentials to access the studio.
+              </p>
+            </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-16 space-y-10">
-              {/* Campo Email */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+              {/* Email */}
               <div className="group relative">
-                <label className="mb-2 block text-[9px] font-bold uppercase tracking-[0.3em] text-white/20 transition-colors group-focus-within:text-[#ff5a66]">
-                  Registry Email
+                <label className="mb-3 block text-[9px] font-semibold uppercase tracking-[0.35em] text-white/30 transition-colors group-focus-within:text-[#ff5a66]">
+                  Email Address
                 </label>
                 <input
                   {...register('email')}
                   type="email"
-                  className="w-full border-b border-white/10 bg-transparent py-2 text-sm font-light tracking-wider text-white outline-none transition-all focus:border-[#ff5a66] placeholder:text-white/5"
-                  placeholder="name@archive.art"
+                  autoComplete="email"
+                  className="w-full border-b border-white/15 bg-transparent pb-3 text-[14px] font-light tracking-wide text-white/90 outline-none transition-all focus:border-[#ff5a66] placeholder:text-white/15"
+                  placeholder=""
                 />
                 {errors.email && (
-                  <p className="absolute -bottom-5 text-[9px] uppercase tracking-widest text-[#ff5a66]/80 animate-in fade-in slide-in-from-top-1">
+                  <p className="absolute -bottom-5 text-[9px] uppercase tracking-wider text-[#ff5a66]/90">
                     {errors.email.message}
                   </p>
                 )}
               </div>
 
-              {/* Campo Password */}
+              {/* Password */}
               <div className="group relative">
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="block text-[9px] font-bold uppercase tracking-[0.3em] text-white/20 transition-colors group-focus-within:text-[#ff5a66]">
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="block text-[9px] font-semibold uppercase tracking-[0.35em] text-white/30 transition-colors group-focus-within:text-[#ff5a66]">
                     Secret Key
                   </label>
-                  <button type="button" className="text-[9px] uppercase tracking-widest text-[#ff5a66]/40 hover:text-[#ff5a66] transition-colors">
-                    Lost Key?
-                  </button>
+                  <Link
+                    to="/forgot-password"
+                    className="text-[9px] uppercase tracking-[0.25em] text-[#ff5a66]/60 hover:text-[#ff5a66] transition-colors"
+                  >
+                    Forgot?
+                  </Link>
                 </div>
                 <input
                   {...register('password')}
                   type="password"
-                  className="w-full border-b border-white/10 bg-transparent py-2 text-sm tracking-[0.5em] text-white outline-none transition-all focus:border-[#ff5a66] placeholder:text-white/5"
+                  autoComplete="current-password"
+                  className="w-full border-b border-white/15 bg-transparent pb-3 text-[14px] tracking-[0.3em] text-white/90 outline-none transition-all focus:border-[#ff5a66] placeholder:text-white/15"
                   placeholder="••••••••"
                 />
                 {errors.password && (
-                  <p className="absolute -bottom-5 text-[9px] uppercase tracking-widest text-[#ff5a66]/80">
+                  <p className="absolute -bottom-5 text-[9px] uppercase tracking-wider text-[#ff5a66]/90">
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
-              <div className="pt-4 space-y-4">
+              {/* API error */}
+              {apiError && (
+                <p className="text-[10px] uppercase tracking-wider text-[#ff5a66] border border-[#ff5a66]/20 bg-[#ff5a66]/5 px-4 py-3">
+                  {apiError}
+                </p>
+              )}
+
+              <div className="pt-6 space-y-4">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="relative flex h-14 w-full items-center justify-center overflow-hidden bg-[#ff5a66] text-[10px] font-bold uppercase tracking-[0.3em] text-black transition-all hover:bg-[#ff7a84] active:scale-[0.98] disabled:opacity-50"
+                  className="relative flex h-[56px] w-full items-center justify-center bg-[#ff5a66] text-[10px] font-bold uppercase tracking-[0.35em] text-black transition-all hover:bg-[#ff7078] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
-                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-black/20 border-t-black" />
-                      Decrypting...
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-black/30 border-t-black" />
+                      Authenticating...
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
@@ -135,25 +156,28 @@ export default function Login() {
                   )}
                 </button>
 
-                <button
+                <p className="text-center text-[9px] uppercase tracking-[0.3em] text-white/25 py-2">
+                  Unregistered?
+                </p>
+
+                <Button
                   type="button"
-                  className="h-14 w-full border border-white/5 bg-white/[0.02] text-[9px] font-bold uppercase tracking-[0.3em] text-white/40 transition-all hover:border-white/20 hover:text-white/80 hover:bg-white/[0.04]"
+                  asChild
+                  variant="ghost"
+                  className="flex h-[56px] w-full items-center justify-center border border-white/10 bg-transparent text-[9px] font-bold uppercase tracking-[0.35em] text-white/40 transition-all hover:border-white/25 hover:text-white/70 hover:bg-white/3 rounded-sm"
                 >
-                  Apply for membership
-                </button>
+                  <Link to="/register">Apply for Membership</Link>
+                </Button>
               </div>
             </form>
           </div>
 
-          {/* Footer del Formulario */}
-          <div className="flex items-center justify-between border-t border-white/5 pt-8">
-            <div className="text-[9px] uppercase tracking-[0.3em] text-white/10">
-              © 2026 Obsidian Archive
-            </div>
-            <div className="flex gap-1">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className={`h-1 w-4 rounded-full ${i === 2 ? 'bg-[#ff5a66]' : 'bg-white/5'}`} />
-              ))}
+          <div className="flex items-center justify-between pt-8 border-t border-white/8">
+            <span className="text-[9px] uppercase tracking-[0.3em] text-white/15">© 2026 Obsidian</span>
+            <div className="flex gap-2">
+              <div className="h-1 w-6 rounded-full bg-white/10" />
+              <div className="h-1 w-6 rounded-full bg-[#ff5a66]" />
+              <div className="h-1 w-6 rounded-full bg-white/10" />
             </div>
           </div>
         </div>
