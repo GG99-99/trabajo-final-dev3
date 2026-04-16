@@ -10,6 +10,10 @@ export type LoginData = {
 }
 
 
+export type RegisterToken = {
+    expiresAt: number;
+}
+
 /*****************
 |   API RESPONSE  |
  *****************/

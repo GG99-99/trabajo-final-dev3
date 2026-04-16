@@ -1,7 +1,8 @@
 import { Request, Response} from 'express';
 import { authService } from "./auth.services.js"
-import { UserCredentials, ApiResponse, CreatePerson, LoginData } from '@final/shared';
-// import { Person } from '@final/db';
+import { UserCredentials, ApiResponse, CreatePerson, LoginData, RegisterToken } from '@final/shared';
+import { printRegisterTokens, refreshIfExpired, registerTokens  } from '#backend/utils';
+
 
 export const authController = {
     login: async (req: Request, res: Response) => {
@@ -66,7 +67,22 @@ export const authController = {
          *************************************/
         return res.json(response)
 
-    }
+    },
+    getRegisterToken: async (req: Request, res: Response) => {
+        refreshIfExpired("tokenA");
+        refreshIfExpired("tokenB");
+        
+        printRegisterTokens()
+        
+
+        res.json({
+            ok: true,
+            data: {
+                expiresAt: registerTokens.tokenA.expiresAt, // ambos expiran al mismo tiempo
+            },
+            error: null
+        } as ApiResponse<RegisterToken>);
+}
 
 
 }

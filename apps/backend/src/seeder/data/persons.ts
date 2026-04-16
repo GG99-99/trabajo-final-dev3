@@ -1,7 +1,7 @@
 
 import { CreatePerson } from "@final/shared"
 
-export const persons: CreatePerson[] = [
+export const persons_seed: CreatePerson[] = [
     {
       first_name: "Juan",
       last_name: "Perez",

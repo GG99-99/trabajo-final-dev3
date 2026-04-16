@@ -1,7 +1,10 @@
 
 import { Request, Response, NextFunction } from "express";
 
+export function validateJwtMiddleware(req: Request, res: Response, next: NextFunction) {
 
-export function validateTokenMiddleware(req: Request, res: Response, next: NextFunction) {
 
+    next()
 }
+
+

@@ -20,7 +20,7 @@ import { workerRouter } from "./modules/worker/worker.router.js";
 
 export const router: Router = Router()
 
-router.use(authRouter)
+router.use("/auth" ,authRouter)
 router.use("/appointments", appointmentRouter)
 router.use("/assists", assistRouter)
 router.use("/attendances", attendanceRouter)
