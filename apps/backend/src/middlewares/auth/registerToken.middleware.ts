@@ -11,8 +11,8 @@ export function validateRegisterToken(req: Request, res: Response, next: NextFun
   }
  
   const isValid =
-    (!isExpired(registerTokens.tokenA.expiresAt) && token === registerTokens.tokenA.value) ||
-    (!isExpired(registerTokens.tokenB.expiresAt) && token === registerTokens.tokenB.value);
+    (!isExpired(registerTokens.tokenWorker.expiresAt) && token === registerTokens.tokenWorker.value) ||
+    (!isExpired(registerTokens.tokenCashier.expiresAt) && token === registerTokens.tokenCashier.value);
  
   if (!isValid) {
     res.status(401).json({ error: "Token inválido o expirado" });
@@ -37,8 +37,8 @@ export function requireRegisterToken(req: Request, res: Response, next: NextFunc
   }
  
   const isValid =
-    (!isExpired(registerTokens.tokenA.expiresAt) && token === registerTokens.tokenA.value) ||
-    (!isExpired(registerTokens.tokenB.expiresAt) && token === registerTokens.tokenB.value);
+    (!isExpired(registerTokens.tokenWorker.expiresAt) && token === registerTokens.tokenWorker.value) ||
+    (!isExpired(registerTokens.tokenCashier.expiresAt) && token === registerTokens.tokenCashier.value);
  
   if (!isValid) {
     res.status(401).json({ error: "Token inválido o expirado" });

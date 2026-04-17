@@ -4,8 +4,8 @@ const TOKEN_LENGTH = 32;
  
 // ── Token store en memoria ───────────────────────────────
 export const registerTokens = {
-  tokenA: { value: "", expiresAt: 0 },
-  tokenB: { value: "", expiresAt: 0 },
+  tokenWorker: { value: "", expiresAt: 0 },
+  tokenCashier: { value: "", expiresAt: 0 },
 };
  
 // ── Helpers ──────────────────────────────────────────────
