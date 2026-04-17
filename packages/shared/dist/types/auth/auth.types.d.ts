@@ -6,6 +6,7 @@ export type LoginData = {
     password: string;
 };
 export type RegisterToken = {
+    token: string;
     expiresAt: number;
 };
 /*****************
