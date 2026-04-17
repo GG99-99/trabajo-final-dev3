@@ -92,6 +92,9 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@final/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@final/shared':
         specifier: workspace:*
         version: link:../../packages/shared

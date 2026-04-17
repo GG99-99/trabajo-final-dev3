@@ -1,5 +1,5 @@
 import { sotckMovementService } from './../stockMovement/stockMovement.service.js';
-import { GetManyBill, GetBill, CreateFullBill, CreateBillTattoo, UpdateBillStatus } from "@final/shared";
+import { GetManyBill, GetBill, CreateFullBill, CreateBillTattoo, UpdateBillStatus, BillFinance } from "@final/shared";
 import { billModel } from "./bill.model.js";
 import prisma, {  Prisma } from "@final/db";
 import { paymentService } from '../payment/payment.service.js';
@@ -14,7 +14,7 @@ export const billService = {
         return await billModel.get(filters)
     },
 
-    getTotal: async (bill_id: number) => {
+    getTotal: async (bill_id: number): Promise<BillFinance> => {
         // para user [ payments, aggregates, discounts ] directamente desde aqui
         const bill = await billModel.get({bill_id: bill_id, relations: true})
         if(!bill) throw({})

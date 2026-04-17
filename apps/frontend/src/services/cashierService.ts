@@ -1,3 +1,4 @@
+import type { Person } from '@final/db';
 import apiClient from '../lib/apiClient.js';
 
 export type Cashier = {
@@ -5,7 +6,7 @@ export type Cashier = {
   person_id: number;
   create_at: string;
   is_deleted: boolean;
-  person?: any;
+  person?: Person;
 };
 
 export const cashierService = {

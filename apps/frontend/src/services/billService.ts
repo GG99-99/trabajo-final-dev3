@@ -1,5 +1,5 @@
 import apiClient from '../lib/apiClient.js';
-import type { GetManyBill, GetBill, CreateFullBill, UpdateBillStatus, BillWithRelations } from '@final/shared';
+import type { GetManyBill, GetBill, CreateFullBill, UpdateBillStatus, BillWithRelations, BillFinance, BillProductItem, BillTattooItem } from '@final/shared';
 
 export const billService = {
   async getMany(filters?: GetManyBill): Promise<BillWithRelations[]> {
@@ -12,17 +12,17 @@ export const billService = {
     return response.data.data;
   },
 
-  async getTotal(bill_id: number): Promise<any> {
+  async getTotal(bill_id: number): Promise<BillFinance> {
     const response = await apiClient.get('/bills/total', { params: { bill_id } });
     return response.data.data;
   },
 
-  async getStockMovements(bill_id: number): Promise<any[]> {
+  async getStockMovements(bill_id: number): Promise<BillProductItem[]> {
     const response = await apiClient.get('/bills/stock-movements', { params: { bill_id } });
     return response.data.data;
   },
 
-  async getTattoos(bill_id: number): Promise<any[]> {
+  async getTattoos(bill_id: number): Promise<BillTattooItem[]> {
     const response = await apiClient.get('/bills/tattoos', { params: { bill_id } });
     return response.data.data;
   },
