@@ -7,7 +7,6 @@ import path from 'path'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default tseslint.config(
-  // Ignore config and build files — they don't need type-checking
   {
     ignores: ['eslint.config.js', 'dist/**', 'node_modules/**'],
   },
