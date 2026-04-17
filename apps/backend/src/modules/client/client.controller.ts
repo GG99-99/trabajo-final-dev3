@@ -3,7 +3,7 @@ import { clientService } from "./client.service.js";
 
 export const clientController = {
   getMany: async (_req: Request, res: Response) => {
-    const clients = await clientService.getAll();
+    const clients = await clientService.getMany();
     return res.json({ ok: true, data: clients, error: null });
   },
 

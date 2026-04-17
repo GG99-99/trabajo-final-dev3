@@ -3,7 +3,7 @@ import { cashierService } from "./cashier.service.js";
 
 export const cashierController = {
   getMany: async (_req: Request, res: Response) => {
-    const cashiers = await cashierService.getAll();
+    const cashiers = await cashierService.getMany();
     return res.json({ ok: true, data: cashiers, error: null });
   },
 

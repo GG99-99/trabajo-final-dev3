@@ -3,7 +3,7 @@ import { workerService } from "./worker.service.js";
 
 export const workerController = {
   getMany: async (_req: Request, res: Response) => {
-    const workers = await workerService.getAll();
+    const workers = await workerService.getMany();
     return res.json({ ok: true, data: workers, error: null });
   },
 

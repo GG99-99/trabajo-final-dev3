@@ -81,12 +81,12 @@ export const authController = {
         refreshIfExpired("tokenB");
         
         printRegisterTokens()
-        
 
         res.json({
             ok: true,
             data: {
-                expiresAt: registerTokens.tokenA.expiresAt, // ambos expiran al mismo tiempo
+                token: registerTokens.tokenA.value,
+                expiresAt: registerTokens.tokenA.expiresAt,
             },
             error: null
         } as ApiResponse<RegisterToken>);
