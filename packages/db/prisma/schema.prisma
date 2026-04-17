@@ -272,7 +272,7 @@ model TattooMaterial {
 
 model Bill {
   bill_id    Int        @id @default(autoincrement())
-  client_id  Int
+  client_id  Int?
   worker_id  Int
   cashier_id Int
   create_at  DateTime   @default(now())
@@ -281,7 +281,7 @@ model Bill {
 
 
   // Relations
-  client      Client       @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
+  client      Client?       @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
   worker      Worker       @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
   cashier     Cashier      @relation(fields: [cashier_id], references: [cashier_id], onDelete: Cascade)
   appointment Appointment? @relation("BillToAppointment", fields: [appointment_id], references: [appointment_id])

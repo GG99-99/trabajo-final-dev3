@@ -1,4 +1,4 @@
-
+import prisma, { type Prisma } from "@final/db";
 
 
 
@@ -42,3 +42,21 @@ export type GetBlocks = {
     date: Date;
     worker_id: number;
 }
+
+
+/************
+|   OBJECTS  |
+ ************/
+export type AppointmentWithRelation = Prisma.Result<
+    typeof prisma.appointment,
+    {
+        include: {
+            client: true,
+            worker: true,
+            tattoo: true,
+            bill: true
+
+        };
+    },
+    'findUnique'
+>;

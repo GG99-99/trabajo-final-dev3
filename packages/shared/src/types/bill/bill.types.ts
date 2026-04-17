@@ -22,7 +22,7 @@ export interface GetBill {
 |   CREATE METHODS  |
  *******************/
 export interface CreateFullBill {
-    client_id: number;
+    client_id?: number;
     worker_id: number;
     cashier_id: number;
     appointment_id?: number;

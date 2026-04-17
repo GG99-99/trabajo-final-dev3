@@ -1,13 +1,15 @@
 import prisma, {Prisma} from "@final/db";
 import { AppointmentStatus } from "@final/db";
-import { GetAppointmentFilters, CreateAppointment } from "@final/shared";
+import { GetAppointmentFilters, CreateAppointment, AppointmentWithRelation } from "@final/shared";
+
+import { toStartOfDay, toEndOfDay } from "#backend/utils";
 
 export const appointmentModel = {
 
     /*********
     |   READ  |
      *********/
-    getMany: async (filters: GetAppointmentFilters) => {
+    getMany: async (filters: GetAppointmentFilters): Promise<AppointmentWithRelation[]> => {
         return await prisma.appointment.findMany({
             where: {
                 ...(filters.appointment_id  && {appointment_id: filters.appointment_id}),
@@ -16,10 +18,21 @@ export const appointmentModel = {
                 ...(filters.tattoo_id       && { tattoo_id:      filters.tattoo_id}),
                 ...(filters.end             && { end:           filters.end}),
                 ...(filters.start           && { start:         filters.start}),
-                ...(filters.date && { date: new Date(new Date(filters.date).toISOString().slice(0,10) + 'T12:00:00.000Z') }),
+                ...(filters.date && {
+                        date: {
+                            gte: toStartOfDay(filters.date),
+                            lte: toEndOfDay(filters.date),
+                        }
+                    }),
                 ...(filters.status          && { status:        filters.status })
             },
-            orderBy: { start: "asc" }
+            orderBy: { start: "asc" },
+            include: {
+                worker: true,
+                client: true,
+                tattoo: true,
+                bill: true
+            }
         })
     },
 

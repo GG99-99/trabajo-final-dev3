@@ -1,7 +1,16 @@
 
 import { AppointmentStatus, Prisma } from "@final/db";
 import prisma from "@final/db";
-import { ApiErr, AppointmentBlockTime, ScheduleJsonDay, GetAppointmentFilters, GetBlocks, CreateAppointment } from "@final/shared";
+import { 
+    ApiErr, 
+    AppointmentBlockTime, 
+    ScheduleJsonDay, 
+    GetAppointmentFilters, 
+    GetBlocks, 
+    CreateAppointment, 
+    AppointmentWithRelation
+ } from "@final/shared";
+ 
 import { appointmentModel } from "./appointment.model.js";
 
 /**********
@@ -40,7 +49,7 @@ export const appointmentService = {
     /*********
     |   READ  |
      *********/
-    getMany: async (filters: GetAppointmentFilters) => {
+    getMany: async (filters: GetAppointmentFilters): Promise<AppointmentWithRelation[]> => {
         return await appointmentModel.getMany(filters)
     },
 
