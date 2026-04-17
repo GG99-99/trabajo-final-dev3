@@ -1,0 +1,264 @@
+import { useState, useEffect } from 'react'
+import { Button } from '@/componentes/ui/button'
+import {
+  Users, Calendar, DollarSign, TrendingUp,
+  Settings, LogOut, Menu, Home, UserCircle, ClipboardList
+} from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import { appointmentService, type AppointmentPublic } from '@/lib/appointment.service'
+import { workerService } from '@/lib/people.service'
+import { clientService } from '@/lib/people.service'
+import type { WorkerPublic, ClientPublic } from '@final/shared'
+
+type NavItem = { icon: React.ElementType; label: string; id: string }
+
+const NAV: NavItem[] = [
+  { icon: Home,          label: 'Dashboard',    id: 'dashboard' },
+  { icon: Calendar,      label: 'Appointments', id: 'appointments' },
+  { icon: Users,         label: 'Clients',      id: 'clients' },
+  { icon: UserCircle,    label: 'Staff',        id: 'staff' },
+  { icon: ClipboardList, label: 'Services',     id: 'services' },
+  { icon: DollarSign,    label: 'Payments',     id: 'payments' },
+  { icon: Settings,      label: 'Settings',     id: 'settings' },
+]
+
+export default function AdminDashboard() {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const { user, setUser } = useAuth()
+  const navigate = useNavigate()
+
+  const [appointments, setAppointments] = useState<AppointmentPublic[]>([])
+  const [workers, setWorkers]           = useState<WorkerPublic[]>([])
+  const [clients, setClients]           = useState<ClientPublic[]>([])
+  const [loading, setLoading]           = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [apptRes, workRes, cliRes] = await Promise.all([
+        appointmentService.getMany(),
+        workerService.getAll(),
+        clientService.getAll(),
+      ])
+      if (apptRes.ok) setAppointments(apptRes.data)
+      if (workRes.ok) setWorkers(workRes.data)
+      if (cliRes.ok)  setClients(cliRes.data)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const handleLogout = () => {
+    setUser(null)
+    navigate('/login')
+  }
+
+  const stats = [
+    { title: 'Appointments',   value: appointments.length,                                                icon: Calendar },
+    { title: 'Active Clients', value: clients.length,                                                     icon: Users },
+    { title: 'Staff Members',  value: workers.length,                                                     icon: UserCircle },
+    { title: 'Pending',        value: appointments.filter(a => a.status === 'pending').length,            icon: TrendingUp },
+  ]
+
+  const statusStyle: Record<string, string> = {
+    pending:   'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    completed: 'bg-[#ff5a66]/10 text-[#ff5a66] border-[#ff5a66]/20',
+    expired:   'bg-white/5 text-white/30 border-white/10',
+    cancelled: 'bg-red-900/20 text-red-400 border-red-500/20',
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] flex">
+      {/* Sidebar */}
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-[#1a1a1a] border-r border-white/10 transition-all duration-300 flex flex-col shrink-0`}>
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          {sidebarOpen && (
+            <h2
+              className="text-[20px] font-light text-white/95"
+              style={{ fontFamily: 'Cormorant Garamond, serif' }}
+            >
+              Admin Panel
+            </h2>
+          )}
+          <Button
+            variant="ghost" size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-white/40 hover:text-white hover:bg-white/5"
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <nav className="p-4 space-y-1 flex-1">
+          {NAV.map(item => (
+            <Button
+              key={item.id}
+              variant="ghost"
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full justify-start ${
+                activeTab === item.id
+                  ? 'bg-[#ff5a66]/10 text-[#ff5a66] border border-[#ff5a66]/20'
+                  : 'text-white/40 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <item.icon className="w-5 h-5 shrink-0" />
+              {sidebarOpen && <span className="ml-3 text-[11px] uppercase tracking-[0.15em]">{item.label}</span>}
+            </Button>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-white/10">
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="w-full justify-start text-[#ff5a66]/60 hover:text-[#ff5a66] hover:bg-white/5"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            {sidebarOpen && <span className="ml-3 text-[11px] uppercase tracking-[0.15em]">Logout</span>}
+          </Button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-8 max-w-7xl mx-auto space-y-8">
+
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1
+                className="text-[48px] font-light text-white/95 leading-none"
+                style={{ fontFamily: 'Cormorant Garamond, serif' }}
+              >
+                Dashboard
+              </h1>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-white/40 mt-2">
+                Welcome back, {user?.email}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm text-white/90 font-medium capitalize">{user?.type}</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">{user?.email}</p>
+              </div>
+              <div className="w-12 h-12 bg-[#ff5a66] rounded-full flex items-center justify-center">
+                <UserCircle className="w-7 h-7 text-black" />
+              </div>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, idx) => (
+              <div key={idx} className="bg-[#1a1a1a] border border-white/10 rounded-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/40">{stat.title}</span>
+                  <stat.icon className="w-5 h-5 text-[#ff5a66]" />
+                </div>
+                <div
+                  className="text-[40px] font-light text-white/95 leading-none"
+                  style={{ fontFamily: 'Cormorant Garamond, serif' }}
+                >
+                  {loading ? '—' : stat.value}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Appointments table */}
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-sm p-6">
+            <div className="mb-6">
+              <h2
+                className="text-[28px] font-light text-white/95 leading-none"
+                style={{ fontFamily: 'Cormorant Garamond, serif' }}
+              >
+                Appointments
+              </h2>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mt-1">
+                All scheduled appointments
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="py-16 text-center text-white/30 text-sm">Loading...</div>
+            ) : appointments.length === 0 ? (
+              <div className="py-16 text-center text-white/30 text-sm">No appointments found</div>
+            ) : (
+              <div className="space-y-3">
+                {appointments.map(apt => (
+                  <div
+                    key={apt.appointment_id}
+                    className="flex items-center justify-between p-4 bg-black/40 border border-white/10 rounded-sm hover:border-[#ff5a66]/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
+                        <UserCircle className="w-6 h-6 text-white/40" />
+                      </div>
+                      <div>
+                        <p className="text-white/90 font-medium text-sm">
+                          Client #{apt.client_id}
+                        </p>
+                        <p className="text-[10px] uppercase tracking-[0.15em] text-white/40">
+                          Worker #{apt.worker_id} · {apt.start} – {apt.end}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <p className="text-white/60 text-sm">
+                        {new Date(apt.date).toLocaleDateString()}
+                      </p>
+                      <span className={`text-[9px] uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${statusStyle[apt.status]}`}>
+                        {apt.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Workers */}
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-sm p-6">
+            <div className="mb-6">
+              <h2
+                className="text-[28px] font-light text-white/95 leading-none"
+                style={{ fontFamily: 'Cormorant Garamond, serif' }}
+              >
+                Staff
+              </h2>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mt-1">
+                Active workers
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="py-8 text-center text-white/30 text-sm">Loading...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {workers.map(w => (
+                  <div key={w.worker_id} className="bg-black/40 border border-white/10 rounded-sm p-4 hover:border-[#ff5a66]/30 transition-colors">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-[#ff5a66]/10 rounded-full flex items-center justify-center">
+                        <UserCircle className="w-6 h-6 text-[#ff5a66]" />
+                      </div>
+                      <div>
+                        <p className="text-white/90 font-medium text-sm">{w.first_name} {w.last_name}</p>
+                        <p className="text-[10px] uppercase tracking-[0.15em] text-white/40">{w.email}</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] uppercase tracking-[0.2em] px-2 py-1 bg-[#ff5a66]/10 text-[#ff5a66] border border-[#ff5a66]/20 rounded-full">
+                      {w.specialty}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </main>
+    </div>
+  )
+}

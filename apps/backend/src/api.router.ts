@@ -21,12 +21,9 @@ import { stockMovementRouter } from "./modules/stockMovement/stockMovement.route
 import { tattooRouter } from "./modules/tattoo/tattoo.router.js";
 import { workerRouter } from "./modules/worker/worker.router.js";
 
-
-
-
 export const router: Router = Router()
 
-router.use("/auth" ,authRouter)
+router.use("/auth", authRouter)
 router.use("/appointments", appointmentRouter)
 router.use("/assists", assistRouter)
 router.use("/attendances", attendanceRouter)
