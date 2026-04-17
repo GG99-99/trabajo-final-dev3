@@ -371,6 +371,6 @@ ALTER TABLE "no_assist" ADD CONSTRAINT "no_assist_worker_id_fkey" FOREIGN KEY ("
 /*********************
 |   CHECK CONSTRAINT  |
  *********************/
- CREATE UNIQUE INDEX "schedule_worker_id_active_unique"
-ON "schedule" ("worker_id")
-WHERE "active" = true;
+--  CREATE UNIQUE INDEX "schedule_worker_id_active_unique"
+-- ON "schedule" ("worker_id")
+-- WHERE "active" = true;

@@ -1,5 +1,5 @@
 import prisma from "@final/db";
-import { GetSeatFilters, SeatWithRelations } from "@final/shared";
+import { CreateSeat, GetSeatFilters, SeatWithRelations } from "@final/shared";
 
 export const seatModel = {
     get: async (filters: GetSeatFilters): Promise<SeatWithRelations | null> => {
@@ -21,4 +21,13 @@ export const seatModel = {
             include: { schedules: true },
         });
     },
+
+    /***********
+    |   CREATE  |
+     ***********/
+    create: async (data: CreateSeat) => {
+        return await prisma.seat.create({
+            data: {...data}
+        })
+    }
 };

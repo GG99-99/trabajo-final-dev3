@@ -1,4 +1,5 @@
-import prisma from "@final/db";
+
+import prisma, {type Prisma} from "@final/db";
 import { CreatePayment, GetPayment, GetManyPayment, PaymentWithRelations, GetManyPaymentByMonth } from "@final/shared";
 import { toStartOfDay, toEndOfDay } from "#backend/utils";
 
@@ -12,7 +13,15 @@ export const paymentModel = {
     get: async (filters: GetPayment) => {
 
         return await prisma.payment.findUnique({
-            where: { payment_id: filters.payment_id },
+            where: { 
+                payment_id: filters.payment_id,
+                ...(filters.date && {
+                    create_at: {
+                        gte: toStartOfDay(filters.date),
+                        lte: toEndOfDay(filters.date),
+                    },
+                }),
+             },
             
         });
     },
@@ -21,6 +30,7 @@ export const paymentModel = {
         return await prisma.payment.findMany({
             where: {
                 ...(filters.bill_id && { bill_id: filters.bill_id }),
+                ...(filters.is_refunded && {is_refunded: filters.is_refunded}),
                 ...(filters.date && {
                     create_at: {
                         gte: toStartOfDay(filters.date),
@@ -55,8 +65,8 @@ export const paymentModel = {
     /***********
     |   CREATE  |
      ***********/
-    create: async (data: CreatePayment): Promise<PaymentWithRelations> => {
-        return await prisma.payment.create({
+    create: async (data: CreatePayment, tx: Prisma.TransactionClient): Promise<PaymentWithRelations> => {
+        return await tx.payment.create({
             data: {
                 ...data
             },

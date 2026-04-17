@@ -10,6 +10,10 @@ export const personService = {
     get: async (filters: GetPerson) => {
         return await personModel.get({person_id: filters.person_id, email: filters.email, noPass: filters.noPass})
     },
+
+    getMany: async () => {
+        return await personModel.getMany()
+    },
     
 
     /***********
@@ -43,3 +47,4 @@ export const personService = {
         return newPerson
     }
 }
+

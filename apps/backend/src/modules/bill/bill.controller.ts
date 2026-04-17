@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { CreateFullBill, GetBill, GetManyBill } from "@final/shared";
+import { CreateFullBill, GetBill, GetManyBill, UpdateBillStatus } from "@final/shared";
 import { billService } from "./bill.service.js";
 import { parseBoolean, parseNumber, parseString } from "../common/controller.utils.js";
 import { BillStatus } from "@final/db";
@@ -47,5 +47,12 @@ export const billController = {
     const payload: CreateFullBill = req.body;
     const bill = await billService.create(payload);
     return res.json({ ok: true, data: bill, error: null });
+  },
+
+  updateState: async (req: Request, res: Response) => {
+    const bill_id = Number(req.body.bill_id || req.query.bill_id);
+    const status = req.body.status || req.query.status;
+    const result = await billService.updateStateDirect({ bill_id, status });
+    return res.json({ ok: true, data: result, error: null });
   },
 };

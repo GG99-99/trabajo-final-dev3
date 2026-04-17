@@ -1,5 +1,6 @@
 
-import { AppointmentStatus } from "@final/db";
+import { AppointmentStatus, Prisma } from "@final/db";
+import prisma from "@final/db";
 import { ApiErr, AppointmentBlockTime, ScheduleJsonDay, GetAppointmentFilters, GetBlocks, CreateAppointment } from "@final/shared";
 import { appointmentModel } from "./appointment.model.js";
 
@@ -19,7 +20,7 @@ export const appointmentService = {
             date: data.date,
             worker_id: data.worker_id
         })
-
+        // console.log(blocks)
         let isOpen = false;
 
         for(const block of blocks) {
@@ -45,8 +46,14 @@ export const appointmentService = {
     /***********
     |   UPDATE  |
      ***********/
-    updateStatus: async (appointment_id: number, status: AppointmentStatus) => {
-        return await appointmentModel.updateStatus(appointment_id, status)
+    updateStatus: async (appointment_id: number, status: AppointmentStatus, tx: Prisma.TransactionClient) => {
+        return await appointmentModel.updateStatus(appointment_id, status, tx)
+    },
+
+    updateStatusDirect: async (appointment_id: number, status: AppointmentStatus) => {
+        return await prisma.$transaction(async (tx) => {
+            return await appointmentModel.updateStatus(appointment_id, status, tx)
+        })
     },
     
 
@@ -57,14 +64,12 @@ export const appointmentService = {
     
     getBlocks: async ({date , worker_id }: GetBlocks): Promise<AppointmentBlockTime[]> => {
         const errorObj: ApiErr = {statusCode: 400, message: "BadRequest", name: "RequestError"}
-
         /****************
         |   DAY OF WEEK  |
          ****************/
         type DayKey = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
         const days: DayKey[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-        const day = days[new Date(date).getDay()] as DayKey
-
+        const day = days[new Date(date).getUTCDay()] as DayKey
         /*************************************
         |   SERACH WORKER DAY  FROM SCHEDULE  |
          *************************************/
@@ -79,6 +84,7 @@ export const appointmentService = {
         }
 
         const daySchedule  = schedule[day] as ScheduleJsonDay
+        console.log(daySchedule)
 
         /***************************
         |   DEFINE LIMITS OF BLOCK  |
@@ -88,14 +94,17 @@ export const appointmentService = {
         const DAY_END = daySchedule.end;
 
         const createBlock = (arr: AppointmentBlockTime[], start: string, end: string) =>
-            arr.push({ start, end, duration: diffTime(end, start) });
+            arr.push({ start, end, duration: diffTime(start, end) });
 
         /************************
         |   SEARCH APPOINTMENTS  |
          ************************/
         const appoints = await appointmentModel.getMany({ date, worker_id });
         if (appoints.length === 0) {
-            return []
+            createBlock(blocks, DAY_START, DAY_END)
+            const updateBlocks = appointmentService.applyRestrictions(blocks, daySchedule)
+
+            return updateBlocks
         }
 
 
@@ -128,7 +137,19 @@ export const appointmentService = {
         /**********************
         |   APPLY RESTRICTION  |
          **********************/
+        const updateBlocks = appointmentService.applyRestrictions(blocks, daySchedule)
+
+        /****************
+        |   RETURN DATA  |
+         ****************/
+        return updateBlocks; 
+
+    },
+
+    applyRestrictions: (blocks: AppointmentBlockTime[], daySchedule: ScheduleJsonDay) => {
         if(blocks.length === 0) return blocks
+        const createBlock = (arr: AppointmentBlockTime[], start: string, end: string) =>
+            arr.push({ start, end, duration: diffTime(start, end) });
 
         let updateBlocks = [...blocks];
         
@@ -165,5 +186,5 @@ export const appointmentService = {
          ****************/
         return updateBlocks; 
 
-    },
+    }
 }

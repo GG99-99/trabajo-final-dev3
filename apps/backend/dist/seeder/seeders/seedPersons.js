@@ -1,7 +1,7 @@
 import prisma from "@final/db";
 import bcrypt from "bcrypt";
 const SALT_ROUNDS = 10;
-export async function PersonForCreates(data) {
+export async function seedPerson(data) {
     for (const personData of data) {
         const { type, specialty, medical_notes, password, ...personInfo } = personData;
         // Hash password

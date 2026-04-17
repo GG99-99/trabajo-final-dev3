@@ -8,6 +8,12 @@ export interface GetSeatFilters {
     seat_code?: string;
     is_deleted?: boolean;
 }
+/*******************
+|   CREATE METHODS  |
+ *******************/
+export interface CreateSeat {
+    seat_code: string;
+}
 export type SeatWithRelations = Prisma.Result<typeof prisma.seat, {
     include: {
         schedules: true;

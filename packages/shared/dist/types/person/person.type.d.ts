@@ -10,6 +10,6 @@ export type CreatePerson = {
 export type GetPerson = {
     person_id?: number;
     email?: string;
-    noPass: boolean;
+    noPass?: boolean;
 };
 //# sourceMappingURL=person.type.d.ts.map

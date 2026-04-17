@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { GetSeatFilters } from "@final/shared";
+import { CreateSeat, GetSeatFilters } from "@final/shared";
 import { seatService } from "./seat.service.js";
 import { parseBoolean, parseNumber, parseString } from "../common/controller.utils.js";
 
@@ -23,4 +23,13 @@ export const seatController = {
     const seat = await seatService.get(filters);
     return res.json({ ok: true, data: seat, error: null });
   },
+
+  /***********
+  |   CREATE  |
+   ***********/
+  create: async (req: Request, res: Response) => {
+      const data: CreateSeat = req.body
+      const seat = await seatService.create(data)
+      return res.json({ ok: true, data: seat, error: null });
+  }
 };

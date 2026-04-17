@@ -35,7 +35,7 @@ export const scheduleController = {
 
   inactive: async (req: Request, res: Response) => {
     const schedule_id = Number(req.body.schedule_id || req.query.schedule_id);
-    const schedule = await scheduleService.inactive(schedule_id);
-    return res.json({ ok: true, data: schedule, error: null });
+    const result = await scheduleService.inactive(schedule_id);
+    return res.json({ ok: true, data: result, error: null });
   },
 };

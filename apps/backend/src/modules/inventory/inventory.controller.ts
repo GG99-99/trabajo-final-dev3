@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { CreateInventoryItem, GetInventoryFilters, GetNotExpired, GetQuantityInventoryFilters } from "@final/shared";
+import { CreateInventoryItem, GetInventoryFilters, GetNotExpired, GetQuantityInventoryFilters, UpdateQuantity } from "@final/shared";
 import { inventoryService } from "./inventory.service.js";
 import { parseNumber } from "../common/controller.utils.js";
 
@@ -43,5 +43,11 @@ export const inventoryController = {
     const payload: CreateInventoryItem = req.body;
     const item = await inventoryService.create(payload);
     return res.json({ ok: true, data: item, error: null });
+  },
+
+  updateQuantity: async (req: Request, res: Response) => {
+    const payload: UpdateQuantity = req.body;
+    const result = await inventoryService.updateQuantityDirect(payload);
+    return res.json({ ok: true, data: result, error: null });
   },
 };

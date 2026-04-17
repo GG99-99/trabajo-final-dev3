@@ -1,7 +1,8 @@
+import { parseString } from './../common/controller.utils.js';
 import { Request, Response} from 'express';
 import { authService } from "./auth.services.js"
 import { UserCredentials, ApiResponse, CreatePerson, LoginData, RegisterToken } from '@final/shared';
-import { printRegisterTokens, refreshIfExpired, registerTokens  } from '#backend/utils';
+import { decodeJwt, printRegisterTokens, refreshIfExpired, registerTokens  } from '#backend/utils';
 
 
 export const authController = {
@@ -46,6 +47,7 @@ export const authController = {
         
     },
     
+    // antes de este controller viene el middleware para validar el register token
     register: async (req: Request, res: Response) => {
         /***********************************
         |   OBTENER DATA  DEL REQUEST BODY  |
@@ -68,6 +70,12 @@ export const authController = {
         return res.json(response)
 
     },
+
+    validateToken: async (req: Request, res: Response) => { 
+        const token = decodeJwt(req.cookies.jwt_token)
+        return res.json({ok: true, data: token, error: null})
+    },
+
     getRegisterToken: async (req: Request, res: Response) => {
         refreshIfExpired("tokenA");
         refreshIfExpired("tokenB");

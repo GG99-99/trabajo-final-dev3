@@ -26,7 +26,9 @@ export const billService = {
         const aggregatesTotal = bill.aggregates.reduce((acc, ag) => acc + Number(ag.amount), 0)
         const tattoosTotal = tattoos.reduce((acc, t) => acc + Number(t.price), 0)
         const discountTotal = bill.discounts.reduce((acc, d) => acc + Number(d.amount), 0)
-        const paymentsTotal = bill.payments.reduce((acc, p) => acc + Number(p.amount), 0)
+        const paymentsTotal = bill.payments
+            .filter((p) => !p.is_refunded)
+            .reduce((acc, p) => acc + Number(p.amount), 0);
 
         const total = aggregatesTotal + tattoosTotal 
         const rawDebt = total - discountTotal - paymentsTotal
@@ -61,7 +63,14 @@ export const billService = {
             /***************
             |   CREAR BILL  |
              ***************/
-            const bill = await billModel.create(data, tx)
+            const bill = await billModel.create({
+                client_id: data.client_id,
+                worker_id: data.worker_id,
+                cashier_id: data.cashier_id,
+                appointment_id: data.appointment_id ?? undefined,
+                create_at: data.create_at
+
+            }, tx)
            
             
             
@@ -123,6 +132,8 @@ export const billService = {
                     reason: dis.reason
                 }, tx)
             }
+
+            return bill
         })
 
     },
@@ -133,7 +144,15 @@ export const billService = {
     /***********
     |   UPDATE  |
      ***********/
-    updateState: async (data: UpdateBillStatus) => {
+    updateState: async (data: UpdateBillStatus, tx: Prisma.TransactionClient) => {
+        return await billModel.updateStatus(data, tx)
+    },
 
-    }
+    updateStateDirect: async (data: UpdateBillStatus) => {
+        return await prisma.$transaction(async (tx) => {
+            return await billModel.updateStatus(data, tx)
+        })
+    },
+
+    
 }

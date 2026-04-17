@@ -26,6 +26,13 @@ export const inventoryService = {
     updateQuantity: async (data: UpdateQuantity, tx: Prisma.TransactionClient) => {
         return await inventoryModel.updateQuantity(data, tx)
     },
+
+    updateQuantityDirect: async (data: UpdateQuantity) => {
+        return await prisma.$transaction(async (tx) => {
+            return await inventoryModel.updateQuantity(data, tx)
+        })
+    },
+
     /***********
     |   CREATE  |
      ***********/

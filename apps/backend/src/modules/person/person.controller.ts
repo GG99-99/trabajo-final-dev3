@@ -14,9 +14,14 @@ export const personController = {
     return res.json({ ok: true, data: person, error: null });
   },
 
-  create: async (req: Request, res: Response) => {
-    const payload: CreatePerson = req.body;
-    const person = await personService.create(payload);
-    return res.json({ ok: true, data: person, error: null });
+  getMany: async (req: Request, res: Response) => {
+    const persons = await personService.getMany()
+    return res.json({ ok: true, data: persons, error: null });
   },
+
+  // create: async (req: Request, res: Response) => {
+  //   const payload: CreatePerson = req.body;
+  //   const person = await personService.create(payload);
+  //   return res.json({ ok: true, data: person, error: null });
+  // },
 };

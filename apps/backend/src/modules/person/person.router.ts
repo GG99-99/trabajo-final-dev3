@@ -5,4 +5,5 @@ export const personRouter: Router = Router();
 
 personRouter
   .get("/detail", personController.get)
-  .post("/", personController.create);
+  .get("/all", personController.getMany)
+  // .post("/", personController.create);

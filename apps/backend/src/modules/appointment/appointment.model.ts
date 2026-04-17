@@ -1,4 +1,4 @@
-import prisma from "@final/db";
+import prisma, {Prisma} from "@final/db";
 import { AppointmentStatus } from "@final/db";
 import { GetAppointmentFilters, CreateAppointment } from "@final/shared";
 
@@ -16,7 +16,7 @@ export const appointmentModel = {
                 ...(filters.tattoo_id       && { tattoo_id:      filters.tattoo_id}),
                 ...(filters.end             && { end:           filters.end}),
                 ...(filters.start           && { start:         filters.start}),
-                ...(filters.date            && { date:          filters.date }),
+                ...(filters.date            && { date:          new Date(filters.date) }),
                 ...(filters.status          && { status:        filters.status })
             },
             orderBy: { start: "asc" }
@@ -26,8 +26,8 @@ export const appointmentModel = {
     /***********
     |   UPDATE  |
      ***********/
-    updateStatus: async (appointment_id: number, status: AppointmentStatus) => {
-        return await prisma.appointment.update({
+    updateStatus: async (appointment_id: number, status: AppointmentStatus, tx: Prisma.TransactionClient) => {
+        return await tx.appointment.update({
             where: { appointment_id },
             data: {
                 status
@@ -40,7 +40,10 @@ export const appointmentModel = {
      ***********/
     create: async (data: CreateAppointment) => {
         return await prisma.appointment.create({
-            data: {...data}
+            data: {
+                ...data,
+                date: new Date(data.date + "T00:00:00Z")
+            }
         })
     }
 

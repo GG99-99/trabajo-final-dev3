@@ -147,8 +147,8 @@ export const billModel = {
     /***********
     |   UPDATE  |
      ***********/
-    updateStatus: async (data: UpdateBillStatus) => {
-        return await prisma.bill.update({
+    updateStatus: async (data: UpdateBillStatus, tx: Prisma.TransactionClient) => {
+        return await tx.bill.update({
             where: {bill_id: data.bill_id},
             data: {
                 status: data.status

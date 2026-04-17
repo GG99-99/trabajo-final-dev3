@@ -6,6 +6,6 @@ export const scheduleRouter: Router = Router();
 scheduleRouter
   .get("/", scheduleController.getMany)
   .get("/active", scheduleController.getActive)
-  .get("/day", scheduleController.getDayByWorker)
+  .get("/day-worker", scheduleController.getDayByWorker)
   .post("/", scheduleController.create)
   .put("/inactive", scheduleController.inactive);

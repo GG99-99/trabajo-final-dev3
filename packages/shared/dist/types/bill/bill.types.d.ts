@@ -21,6 +21,7 @@ export interface CreateFullBill {
     client_id: number;
     worker_id: number;
     cashier_id: number;
+    appointment_id?: number;
     create_at: Date;
     tatto_ids: number[];
     items: {
@@ -52,6 +53,7 @@ export interface CreateBill {
     client_id: number;
     worker_id: number;
     cashier_id: number;
+    appointment_id?: number;
     create_at: Date;
 }
 export interface CreateBillDetail {

@@ -1,4 +1,4 @@
-import type { Prisma, Bill, $Enums, BillStatus } from "@final/db";
+import type { Prisma, Bill, $Enums, BillStatus, PaymentMethod } from "@final/db";
 import prisma from "@final/db";
 
 
@@ -25,6 +25,7 @@ export interface CreateFullBill {
     client_id: number;
     worker_id: number;
     cashier_id: number;
+    appointment_id?: number;
     create_at: Date;
     tatto_ids: number[];
     items: {
@@ -60,6 +61,7 @@ export interface CreateBill {
     client_id: number;
     worker_id: number;
     cashier_id: number;
+    appointment_id?: number;
     create_at: Date;
 }
 
@@ -113,3 +115,5 @@ export type BillTattooItem = {
   tattoo_id: number;
   price: number;
 };
+
+

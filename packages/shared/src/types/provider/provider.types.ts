@@ -24,7 +24,7 @@ export type GetProvider = {
 /*******************
 |   CREATE METHODS  |
  *******************/
-export type CreateProvider = {
+export interface CreateProvider  {
     name: string;
     code: string;
     phone_number: string;

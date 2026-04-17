@@ -8,4 +8,5 @@ inventoryRouter
   .get("/total-quantity", inventoryController.getTotalQuantity)
   .get("/not-expired", inventoryController.getNotExpired)
   .get("/not-expired-list", inventoryController.getManyNotExpired)
-  .post("/", inventoryController.create);
+  .post("/", inventoryController.create)
+  .put("/quantity", inventoryController.updateQuantity);

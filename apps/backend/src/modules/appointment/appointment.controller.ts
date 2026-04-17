@@ -51,7 +51,7 @@ export const appointmentController = {
     {
         const appointment_id = Number(req.body.appointment_id || req.query.appointment_id);
         const status = req.body.status || req.query.status;
-        const result = await appointmentService.updateStatus(appointment_id, status);
+        const result = await appointmentService.updateStatusDirect(appointment_id, status);
         return res.json({ ok: true, data: result, error: null });
     },
 };

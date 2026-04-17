@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "tattoo" ALTER COLUMN "time" SET DATA TYPE TEXT;

@@ -1,4 +1,4 @@
-import { GetSeatFilters } from "@final/shared";
+import {  CreateSeat, GetSeatFilters } from "@final/shared";
 import { seatModel } from "./seat.model.js";
 
 export const seatService = {
@@ -9,4 +9,11 @@ export const seatService = {
     getMany: async (filters: GetSeatFilters) => {
         return await seatModel.getMany(filters);
     },
+
+    /***********
+    |   CREATE  |
+     ***********/
+    create: async(data: CreateSeat) => {
+        return await seatModel.create(data)
+    }
 };

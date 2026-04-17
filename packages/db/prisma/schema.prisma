@@ -107,6 +107,7 @@ model Cashier {
   // Relations
   person Person @relation(fields: [person_id], references: [person_id], onDelete: Cascade)
   bills  Bill[]
+  payments Payment[]
 
   @@map("cashier")
 }
@@ -156,7 +157,7 @@ model Product {
   product_id  Int    @id @default(autoincrement())
   category_id Int
   provider_id Int
-  name        String
+  name        String 
   brand       String
 
   // Relations
@@ -164,6 +165,7 @@ model Product {
   category Category         @relation(fields: [category_id], references: [category_id], onDelete: Cascade)
   variants ProductVariant[]
 
+  @@unique([name, provider_id])
   @@map("product")
 }
 
@@ -180,6 +182,7 @@ model ProductVariant {
   inventoryItems InventoryItem[]
   tattooMaterials TattooMaterial[]
 
+  @@unique([product_id, presentation])
   @@map("product_variant")
 }
 
@@ -237,7 +240,7 @@ model Tattoo {
   tattoo_id Int      @id @default(autoincrement())
   img_id   Int
   cost     Decimal  @db.Decimal(10, 2)
-  time     DateTime @db.Time
+  time     String
   name     String
 
   // Relations
@@ -273,11 +276,14 @@ model Bill {
   cashier_id Int
   create_at  DateTime   @default(now())
   status     BillStatus @default(pending)
+  appointment_id Int? @unique
+
 
   // Relations
   client      Client       @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
   worker      Worker       @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
   cashier     Cashier      @relation(fields: [cashier_id], references: [cashier_id], onDelete: Cascade)
+  appointment Appointment? @relation("BillToAppointment", fields: [appointment_id], references: [appointment_id])
   details     BillDetail[]
   tattoos     BillTattoo[]  @relation("BillToTattoo")
   payments    Payment[]
@@ -338,16 +344,20 @@ model BillAggregate {
 }
 
 
+
 model Payment {
   payment_id      Int           @id @default(autoincrement())
   bill_id         Int
+  cashier_id      Int
   create_at       DateTime      @default(now())
   amount          Decimal       @db.Decimal(10, 2)
   method          PaymentMethod
   transaction_ref String
+  is_refunded     Boolean       @default(false)
 
   // Relations
   bill Bill @relation(fields: [bill_id], references: [bill_id], onDelete: Cascade)
+  cashier     Cashier      @relation(fields: [cashier_id], references: [cashier_id], onDelete: Cascade)
 
   @@map("payment")
 }
@@ -358,7 +368,7 @@ model Payment {
 
 model Seat {
   seat_id    Int      @id @default(autoincrement())
-  seat_code  String
+  seat_code  String   @unique
   created_at DateTime @default(now())
   is_deleted Boolean  @default(false)
 
@@ -429,6 +439,7 @@ model Appointment {
   worker Worker @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
   client Client @relation(fields: [client_id], references: [client_id], onDelete: Cascade)
   tattoo  Tattoo  @relation(fields: [tattoo_id], references: [tattoo_id], onDelete: Cascade)
+  bill Bill? @relation("BillToAppointment")
 
   @@map("appointment")
 }
