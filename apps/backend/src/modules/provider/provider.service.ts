@@ -1,7 +1,7 @@
 import { providerModel } from "./provider.model.js"
 import { GetProvider, CreateProvider } from "@final/shared"
 
-export const providerSerice = {
+export const providerService = {
     /*********
     |   READ  |
      *********/

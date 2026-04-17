@@ -11,6 +11,7 @@ export type LoginData = {
 
 
 export type RegisterToken = {
+    token: string;
     expiresAt: number;
 }
 

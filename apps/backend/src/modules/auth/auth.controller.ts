@@ -81,7 +81,6 @@ export const authController = {
         refreshIfExpired("tokenCashier");
         
         printRegisterTokens()
-        
 
         res.json({
             ok: true,

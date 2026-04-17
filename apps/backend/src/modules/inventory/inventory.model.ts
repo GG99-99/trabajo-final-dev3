@@ -35,8 +35,8 @@ export const inventoryModel = {
                 product_variant_id: filters.product_variant_id,
                 current_quantity: { gt: 0 },
                 OR: [
-                        { expiry_date: null },                  // sin fecha de expiración
-                        { expiry_date: { lt: new Date() } },    // no han expirado
+                        { expiry_date: null },
+                        { expiry_date: { gt: new Date() } },
                 ],
             },
             include: { productVariant: true }
@@ -49,10 +49,9 @@ export const inventoryModel = {
                 current_quantity: filters.gte 
                     ? {gte: filters.gte}
                     : {gte: 0},
-                    
                 OR: [
-                        { expiry_date: null },                  // sin fecha de expiración
-                        { expiry_date: { lt: new Date() } },    // no han expirado
+                        { expiry_date: null },
+                        { expiry_date: { gt: new Date() } },
                 ],
             },
             include: { productVariant: true }

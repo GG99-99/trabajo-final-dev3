@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import SimpleBar from 'simplebar-react'
+import 'simplebar-react/dist/simplebar.min.css'
 import { Button } from '@/componentes/ui/button'
 import {
   Users, Calendar, DollarSign, TrendingUp,
@@ -7,8 +9,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { appointmentService, type AppointmentPublic } from '@/lib/appointment.service'
-import { workerService } from '@/lib/people.service'
-import { clientService } from '@/lib/people.service'
+import { workerService, clientService } from '@/lib/people.service'
 import type { WorkerPublic, ClientPublic } from '@final/shared'
 
 type NavItem = { icon: React.ElementType; label: string; id: string }
@@ -23,11 +24,18 @@ const NAV: NavItem[] = [
   { icon: Settings,      label: 'Settings',     id: 'settings' },
 ]
 
+const statusStyle: Record<string, string> = {
+  pending:   'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+  completed: 'bg-[#ff5a66]/10 text-[#ff5a66] border-[#ff5a66]/20',
+  expired:   'bg-white/5 text-white/30 border-white/10',
+  cancelled: 'bg-red-900/20 text-red-400 border-red-500/20',
+}
+
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [activeTab, setActiveTab] = useState('dashboard')
-  const { user, setUser } = useAuth()
-  const navigate = useNavigate()
+  const [activeTab, setActiveTab]     = useState('dashboard')
+  const { user, setUser }             = useAuth()
+  const navigate                      = useNavigate()
 
   const [appointments, setAppointments] = useState<AppointmentPublic[]>([])
   const [workers, setWorkers]           = useState<WorkerPublic[]>([])
@@ -56,27 +64,24 @@ export default function AdminDashboard() {
   }
 
   const stats = [
-    { title: 'Appointments',   value: appointments.length,                                                icon: Calendar },
-    { title: 'Active Clients', value: clients.length,                                                     icon: Users },
-    { title: 'Staff Members',  value: workers.length,                                                     icon: UserCircle },
-    { title: 'Pending',        value: appointments.filter(a => a.status === 'pending').length,            icon: TrendingUp },
+    { title: 'Appointments',   value: appointments.length,                                     icon: Calendar },
+    { title: 'Active Clients', value: clients.length,                                          icon: Users },
+    { title: 'Staff Members',  value: workers.length,                                          icon: UserCircle },
+    { title: 'Pending',        value: appointments.filter(a => a.status === 'pending').length, icon: TrendingUp },
   ]
 
-  const statusStyle: Record<string, string> = {
-    pending:   'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-    completed: 'bg-[#ff5a66]/10 text-[#ff5a66] border-[#ff5a66]/20',
-    expired:   'bg-white/5 text-white/30 border-white/10',
-    cancelled: 'bg-red-900/20 text-red-400 border-red-500/20',
-  }
-
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex">
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-[#1a1a1a] border-r border-white/10 transition-all duration-300 flex flex-col shrink-0`}>
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+    <div className="h-screen bg-[#0a0a0a] flex overflow-hidden">
+
+      {/* ── SIDEBAR ── */}
+      <aside
+        className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-[#1a1a1a] border-r border-white/10 transition-all duration-300 flex flex-col shrink-0 h-full`}
+      >
+        {/* Logo / toggle */}
+        <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
           {sidebarOpen && (
             <h2
-              className="text-[20px] font-light text-white/95"
+              className="text-[20px] font-light text-white/95 truncate"
               style={{ fontFamily: 'Cormorant Garamond, serif' }}
             >
               Admin Panel
@@ -85,44 +90,54 @@ export default function AdminDashboard() {
           <Button
             variant="ghost" size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-white/40 hover:text-white hover:bg-white/5"
+            className="text-white/40 hover:text-white hover:bg-white/5 shrink-0"
           >
             <Menu className="w-5 h-5" />
           </Button>
         </div>
 
-        <nav className="p-4 space-y-1 flex-1">
-          {NAV.map(item => (
-            <Button
-              key={item.id}
-              variant="ghost"
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full justify-start ${
-                activeTab === item.id
-                  ? 'bg-[#ff5a66]/10 text-[#ff5a66] border border-[#ff5a66]/20'
-                  : 'text-white/40 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              {sidebarOpen && <span className="ml-3 text-[11px] uppercase tracking-[0.15em]">{item.label}</span>}
-            </Button>
-          ))}
-        </nav>
+        {/* Nav — scrollable if items overflow */}
+        <SimpleBar className="flex-1 min-h-0" style={{ height: '100%' }}>
+          <nav className="p-4 space-y-1">
+            {NAV.map(item => (
+              <Button
+                key={item.id}
+                variant="ghost"
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full justify-start ${
+                  activeTab === item.id
+                    ? 'bg-[#ff5a66]/10 text-[#ff5a66] border border-[#ff5a66]/20'
+                    : 'text-white/40 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <item.icon className="w-5 h-5 shrink-0" />
+                {sidebarOpen && (
+                  <span className="ml-3 text-[11px] uppercase tracking-[0.15em]">
+                    {item.label}
+                  </span>
+                )}
+              </Button>
+            ))}
+          </nav>
+        </SimpleBar>
 
-        <div className="p-4 border-t border-white/10">
+        {/* Logout — always pinned at bottom */}
+        <div className="p-4 border-t border-white/10 shrink-0">
           <Button
             variant="ghost"
             onClick={handleLogout}
             className="w-full justify-start text-[#ff5a66]/60 hover:text-[#ff5a66] hover:bg-white/5"
           >
             <LogOut className="w-5 h-5 shrink-0" />
-            {sidebarOpen && <span className="ml-3 text-[11px] uppercase tracking-[0.15em]">Logout</span>}
+            {sidebarOpen && (
+              <span className="ml-3 text-[11px] uppercase tracking-[0.15em]">Logout</span>
+            )}
           </Button>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-y-auto">
+      {/* ── MAIN CONTENT ── */}
+      <SimpleBar className="flex-1 min-w-0 h-full">
         <div className="p-8 max-w-7xl mx-auto space-y-8">
 
           {/* Header */}
@@ -146,6 +161,15 @@ export default function AdminDashboard() {
               <div className="w-12 h-12 bg-[#ff5a66] rounded-full flex items-center justify-center">
                 <UserCircle className="w-7 h-7 text-black" />
               </div>
+              {/* Logout button in header too */}
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="text-white/40 hover:text-[#ff5a66] hover:bg-white/5 text-[10px] uppercase tracking-[0.2em]"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
 
@@ -167,7 +191,7 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* Appointments table */}
+          {/* Appointments */}
           <div className="bg-[#1a1a1a] border border-white/10 rounded-sm p-6">
             <div className="mb-6">
               <h2
@@ -197,9 +221,7 @@ export default function AdminDashboard() {
                         <UserCircle className="w-6 h-6 text-white/40" />
                       </div>
                       <div>
-                        <p className="text-white/90 font-medium text-sm">
-                          Client #{apt.client_id}
-                        </p>
+                        <p className="text-white/90 font-medium text-sm">Client #{apt.client_id}</p>
                         <p className="text-[10px] uppercase tracking-[0.15em] text-white/40">
                           Worker #{apt.worker_id} · {apt.start} – {apt.end}
                         </p>
@@ -219,7 +241,7 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Workers */}
+          {/* Staff */}
           <div className="bg-[#1a1a1a] border border-white/10 rounded-sm p-6">
             <div className="mb-6">
               <h2
@@ -238,7 +260,10 @@ export default function AdminDashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {workers.map(w => (
-                  <div key={w.worker_id} className="bg-black/40 border border-white/10 rounded-sm p-4 hover:border-[#ff5a66]/30 transition-colors">
+                  <div
+                    key={w.worker_id}
+                    className="bg-black/40 border border-white/10 rounded-sm p-4 hover:border-[#ff5a66]/30 transition-colors"
+                  >
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 bg-[#ff5a66]/10 rounded-full flex items-center justify-center">
                         <UserCircle className="w-6 h-6 text-[#ff5a66]" />
@@ -258,7 +283,7 @@ export default function AdminDashboard() {
           </div>
 
         </div>
-      </main>
+      </SimpleBar>
     </div>
   )
 }
