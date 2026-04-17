@@ -117,3 +117,11 @@ export type BillTattooItem = {
 };
 
 
+export type BillFinance = {
+    bill_id: number;
+    total: number;
+    total_discount: number;
+    total_after_discount: number;
+    debt: number;
+    overpaid: number;
+}

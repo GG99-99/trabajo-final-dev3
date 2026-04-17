@@ -94,4 +94,12 @@ export type BillTattooItem = {
     tattoo_id: number;
     price: number;
 };
+export type BillFinance = {
+    bill_id: number;
+    total: number;
+    total_discount: number;
+    total_after_discount: number;
+    debt: number;
+    overpaid: number;
+};
 //# sourceMappingURL=bill.types.d.ts.map
