@@ -6,13 +6,13 @@ export declare const scheduleModel: {
      ***********/
     create: (data: CreateSchedule) => Promise<{
         worker_id: number;
-        monday: import("@prisma/runtime/client.js").JsonValue;
-        tuesday: import("@prisma/runtime/client.js").JsonValue;
-        wednesday: import("@prisma/runtime/client.js").JsonValue;
-        thursday: import("@prisma/runtime/client.js").JsonValue;
-        friday: import("@prisma/runtime/client.js").JsonValue;
-        saturday: import("@prisma/runtime/client.js").JsonValue;
-        sunday: import("@prisma/runtime/client.js").JsonValue;
+        monday: import("@prisma/client/runtime/client").JsonValue;
+        tuesday: import("@prisma/client/runtime/client").JsonValue;
+        wednesday: import("@prisma/client/runtime/client").JsonValue;
+        thursday: import("@prisma/client/runtime/client").JsonValue;
+        friday: import("@prisma/client/runtime/client").JsonValue;
+        saturday: import("@prisma/client/runtime/client").JsonValue;
+        sunday: import("@prisma/client/runtime/client").JsonValue;
         created_at: Date;
         valid_until: Date | null;
         active: boolean;
@@ -24,13 +24,13 @@ export declare const scheduleModel: {
      *********/
     getActive: (worker_id: number) => Promise<{
         worker_id: number;
-        monday: import("@prisma/runtime/client.js").JsonValue;
-        tuesday: import("@prisma/runtime/client.js").JsonValue;
-        wednesday: import("@prisma/runtime/client.js").JsonValue;
-        thursday: import("@prisma/runtime/client.js").JsonValue;
-        friday: import("@prisma/runtime/client.js").JsonValue;
-        saturday: import("@prisma/runtime/client.js").JsonValue;
-        sunday: import("@prisma/runtime/client.js").JsonValue;
+        monday: import("@prisma/client/runtime/client").JsonValue;
+        tuesday: import("@prisma/client/runtime/client").JsonValue;
+        wednesday: import("@prisma/client/runtime/client").JsonValue;
+        thursday: import("@prisma/client/runtime/client").JsonValue;
+        friday: import("@prisma/client/runtime/client").JsonValue;
+        saturday: import("@prisma/client/runtime/client").JsonValue;
+        sunday: import("@prisma/client/runtime/client").JsonValue;
         created_at: Date;
         valid_until: Date | null;
         active: boolean;
@@ -39,13 +39,13 @@ export declare const scheduleModel: {
     } | null>;
     getMany: (data: GetManySchedules) => Promise<{
         worker_id: number;
-        monday: import("@prisma/runtime/client.js").JsonValue;
-        tuesday: import("@prisma/runtime/client.js").JsonValue;
-        wednesday: import("@prisma/runtime/client.js").JsonValue;
-        thursday: import("@prisma/runtime/client.js").JsonValue;
-        friday: import("@prisma/runtime/client.js").JsonValue;
-        saturday: import("@prisma/runtime/client.js").JsonValue;
-        sunday: import("@prisma/runtime/client.js").JsonValue;
+        monday: import("@prisma/client/runtime/client").JsonValue;
+        tuesday: import("@prisma/client/runtime/client").JsonValue;
+        wednesday: import("@prisma/client/runtime/client").JsonValue;
+        thursday: import("@prisma/client/runtime/client").JsonValue;
+        friday: import("@prisma/client/runtime/client").JsonValue;
+        saturday: import("@prisma/client/runtime/client").JsonValue;
+        sunday: import("@prisma/client/runtime/client").JsonValue;
         created_at: Date;
         valid_until: Date | null;
         active: boolean;
@@ -57,20 +57,20 @@ export declare const scheduleModel: {
         created_at: Date;
         schedule_id: number;
         exceptions_id: number;
-        scheduled: import("@prisma/runtime/client.js").JsonValue | null;
+        scheduled: import("@prisma/client/runtime/client").JsonValue | null;
     }[] | null>;
     /***********
     |   UPDATE  |
      ***********/
     inactive: (schedule_id: number) => Promise<{
         worker_id: number;
-        monday: import("@prisma/runtime/client.js").JsonValue;
-        tuesday: import("@prisma/runtime/client.js").JsonValue;
-        wednesday: import("@prisma/runtime/client.js").JsonValue;
-        thursday: import("@prisma/runtime/client.js").JsonValue;
-        friday: import("@prisma/runtime/client.js").JsonValue;
-        saturday: import("@prisma/runtime/client.js").JsonValue;
-        sunday: import("@prisma/runtime/client.js").JsonValue;
+        monday: import("@prisma/client/runtime/client").JsonValue;
+        tuesday: import("@prisma/client/runtime/client").JsonValue;
+        wednesday: import("@prisma/client/runtime/client").JsonValue;
+        thursday: import("@prisma/client/runtime/client").JsonValue;
+        friday: import("@prisma/client/runtime/client").JsonValue;
+        saturday: import("@prisma/client/runtime/client").JsonValue;
+        sunday: import("@prisma/client/runtime/client").JsonValue;
         created_at: Date;
         valid_until: Date | null;
         active: boolean;

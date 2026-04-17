@@ -1,7 +1,8 @@
+import './env.js';
 import express from "express";
-import 'dotenv/config';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import cors from 'cors';
 /***********************************
 |   00. CARGAR DATA SEEDS EN LA DB  |
  ***********************************/
@@ -15,6 +16,18 @@ const PORT = Number(process.env.PORT) || 3030;
 /*******************
 |   1. MIDDLEWARES  |
  *******************/
+app.use(cors({
+    origin: (origin, callback) => {
+        // allow requests with no origin (mobile apps, curl) or any localhost port
+        if (!origin || origin.startsWith('http://localhost')) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

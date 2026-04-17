@@ -7,7 +7,7 @@ export declare const cashierService: {
             last_name: string;
             email: string;
             password: string | null;
-            type: import("@prisma/index.js").$Enums.PersonType;
+            type: import("@prisma/client").$Enums.PersonType;
         };
     } & {
         person_id: number;
@@ -20,7 +20,7 @@ export declare const cashierService: {
         last_name: string;
         email: string;
         password: string | null;
-        type: import("@prisma/index.js").$Enums.PersonType;
+        type: import("@prisma/client").$Enums.PersonType;
     }>;
 };
 //# sourceMappingURL=cashier.service.d.ts.map

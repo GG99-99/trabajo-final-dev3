@@ -1,3 +1,4 @@
+import prisma from "@final/db";
 import { appointmentModel } from "./appointment.model.js";
 /**********
 |   UTILS  |
@@ -10,6 +11,21 @@ export const appointmentService = {
     |   CREATE  |
      ***********/
     create: async (data) => {
+        const blocks = await appointmentService.getBlocks({
+            date: data.date,
+            worker_id: data.worker_id
+        });
+        // console.log(blocks)
+        let isOpen = false;
+        for (const block of blocks) {
+            if (block.start <= data.start && data.end <= block.end) {
+                isOpen = true;
+                break;
+            }
+        }
+        if (isOpen)
+            return await appointmentModel.create(data);
+        return null;
     },
     /*********
     |   READ  |
@@ -20,19 +36,21 @@ export const appointmentService = {
     /***********
     |   UPDATE  |
      ***********/
-    updateStatus: async (appointment_id, status) => {
-        return await appointmentModel.updateStatus(appointment_id, status);
+    updateStatus: async (appointment_id, status, tx) => {
+        return await appointmentModel.updateStatus(appointment_id, status, tx);
+    },
+    updateStatusDirect: async (appointment_id, status) => {
+        return await prisma.$transaction(async (tx) => {
+            return await appointmentModel.updateStatus(appointment_id, status, tx);
+        });
     },
     /****************
     |   PROGRAMMING  |
      ****************/
-    getBlocks: async (date, worker_id) => {
+    getBlocks: async ({ date, worker_id }) => {
         const errorObj = { statusCode: 400, message: "BadRequest", name: "RequestError" };
-        /****************
-        |   DAY OF WEEK  |
-         ****************/
         const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-        const day = days[new Date(date).getDay()];
+        const day = days[new Date(date).getUTCDay()];
         /*************************************
         |   SERACH WORKER DAY  FROM SCHEDULE  |
          *************************************/
@@ -42,22 +60,25 @@ export const appointmentService = {
         }
         const schedule = await scheduleService.getActive(worker_id);
         if (!schedule) {
-            throw (errorObj); // have to be an error
+            return [];
         }
-        const daySchedule = schedule?.[day];
+        const daySchedule = schedule[day];
+        console.log(daySchedule);
         /***************************
         |   DEFINE LIMITS OF BLOCK  |
          ***************************/
         const blocks = [];
         const DAY_START = daySchedule.start;
         const DAY_END = daySchedule.end;
-        const createBlock = (arr, start, end) => arr.push({ start, end, duration: diffTime(end, start) });
+        const createBlock = (arr, start, end) => arr.push({ start, end, duration: diffTime(start, end) });
         /************************
         |   SEARCH APPOINTMENTS  |
          ************************/
         const appoints = await appointmentModel.getMany({ date, worker_id });
         if (appoints.length === 0) {
-            throw (errorObj);
+            createBlock(blocks, DAY_START, DAY_END);
+            const updateBlocks = appointmentService.applyRestrictions(blocks, daySchedule);
+            return updateBlocks;
         }
         /******************
         |   CREATE BLOCKS  |
@@ -82,8 +103,16 @@ export const appointmentService = {
         /**********************
         |   APPLY RESTRICTION  |
          **********************/
+        const updateBlocks = appointmentService.applyRestrictions(blocks, daySchedule);
+        /****************
+        |   RETURN DATA  |
+         ****************/
+        return updateBlocks;
+    },
+    applyRestrictions: (blocks, daySchedule) => {
         if (blocks.length === 0)
             return blocks;
+        const createBlock = (arr, start, end) => arr.push({ start, end, duration: diffTime(start, end) });
         let updateBlocks = [...blocks];
         for (const restriction of daySchedule.breaks) {
             const current = [...updateBlocks]; // itera sobre estado actual
@@ -114,6 +143,6 @@ export const appointmentService = {
         |   RETURN DATA  |
          ****************/
         return updateBlocks;
-    },
+    }
 };
 //# sourceMappingURL=appointment.service.js.map

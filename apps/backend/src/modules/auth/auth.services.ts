@@ -27,7 +27,7 @@ export const authService = {
 
     register: async (data: CreatePerson) => {
         
-        if(data.type === "client") return await personService.create(data);
+        if(data.type === "client") throw({});
         
         
         refreshIfExpired('tokenCashier')

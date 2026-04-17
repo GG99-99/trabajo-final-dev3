@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 // import { authModel } from "./auth.model.js"
 import { personService } from '../person/person.service.js';
 import jwt from 'jsonwebtoken';
+import { refreshIfExpired, registerTokens } from '#backend/utils';
 export const authService = {
     login: async (userData) => {
         // buscar usuarios
@@ -19,9 +20,18 @@ export const authService = {
             type: user.type
         };
     },
-    register: async (personData) => {
-        const newPerson = await personService.create(personData);
-        return newPerson;
+    register: async (data) => {
+        if (data.type === "client")
+            throw ({});
+        refreshIfExpired('tokenCashier');
+        refreshIfExpired('tokenCashier');
+        if (data.type === "worker" && data.token === registerTokens.tokenWorker.value) {
+            return await personService.create(data);
+        }
+        else if (data.type === "cashier" && data.token === registerTokens.tokenCashier.value) {
+            return await personService.create(data);
+        }
+        throw { name: "InvalidRegister", statusCode: 403, message: "registro invalido" };
     },
     createToken: (data) => (jwt.sign(data, process.env.SECRET_JWT_KEY, { expiresIn: "1h" }))
 };

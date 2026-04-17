@@ -11,12 +11,12 @@ export function diffTime(start, end) {
 }
 export const toStartOfDay = (date, offsetHours = -4) => {
     const d = new Date(date);
-    d.setUTCHours(0 - offsetHours, 0, 0, 0); // medianoche en UTC-4 = 04:00 UTC
+    d.setUTCHours(-offsetHours, 0, 0, 0);
     return d;
 };
 export const toEndOfDay = (date, offsetHours = -4) => {
     const d = new Date(date);
-    d.setUTCHours(23 - offsetHours, 59, 59, 999); // 23:59 en UTC-4 = 03:59 UTC del día siguiente
+    d.setUTCHours(23 + (-offsetHours), 59, 59, 999);
     return d;
 };
 //# sourceMappingURL=time.js.map

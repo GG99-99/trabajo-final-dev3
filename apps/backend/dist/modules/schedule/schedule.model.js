@@ -6,15 +6,7 @@ export const scheduleModel = {
     create: async (data) => {
         return await prisma.schedule.create({
             data: {
-                worker_id: data.worker_id,
-                seat_id: data.seat_id,
-                monday: data.monday,
-                tuesday: data.tuesday,
-                wednesday: data.wednesday,
-                thursday: data.thursday,
-                friday: data.friday,
-                saturday: data.saturday,
-                sunday: data.sunday,
+                ...data
             }
         });
     },
@@ -34,7 +26,7 @@ export const scheduleModel = {
             where: {
                 ...(data.worker_id && { worker_id: data.worker_id }),
                 ...(data.seat_id && { seat_id: data.seat_id }),
-                active: true
+                active: data.active || undefined,
             }
         });
     },

@@ -27,6 +27,15 @@ export const stockMovementModel = {
                 ...(filters.type && { type: filters.type }),
             }
         });
+    },
+    /***********
+    |   CREATE  |
+     ***********/
+    create: async (data, tx) => {
+        // crear el stockMovement
+        return await tx.stockMovement.create({
+            data: { ...data }
+        });
     }
 };
 //# sourceMappingURL=stockMovement.model.js.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"person.controller.d.ts","sourceRoot":"","sources":["../../../src/modules/person/person.controller.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAK5C,eAAO,MAAM,gBAAgB;eACV,OAAO,OAAO,QAAQ;mBAUlB,OAAO,OAAO,QAAQ;CAU5C,CAAC"}

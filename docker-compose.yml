@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: finaldb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # ports:
+    #   - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    ports:
+      - "3030:3030"
+    environment:
+      PORT: 3030
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/finaldb
+      DIRECT_URL: postgresql://postgres:postgres@db:5432/finaldb
+      SECRET_JWT_KEY: change_me_super_secret
+      LOG_LEVEL: info
+      SERVICE_NAME: final-dev3/backend
+    restart: unless-stopped
+
+volumes:
+  db-data:

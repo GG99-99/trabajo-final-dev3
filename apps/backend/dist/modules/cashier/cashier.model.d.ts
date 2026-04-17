@@ -9,7 +9,7 @@ export declare const cashierModel: {
             last_name: string;
             email: string;
             password: string | null;
-            type: import("@prisma/index.js").$Enums.PersonType;
+            type: import("@final/db").$Enums.PersonType;
         };
     } & {
         person_id: number;
@@ -22,7 +22,7 @@ export declare const cashierModel: {
             last_name: string;
             email: string;
             password: string | null;
-            type: import("@prisma/index.js").$Enums.PersonType;
+            type: import("@final/db").$Enums.PersonType;
         };
     } & {
         person_id: number;

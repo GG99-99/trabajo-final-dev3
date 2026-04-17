@@ -1,0 +1,32 @@
+import { decodeJwt } from "#backend/utils";
+export function validateJwtMiddleware(req, res, next) {
+    const token = req.cookies.jwt_token;
+    if (!token) {
+        return res.status(401).json({
+            ok: false,
+            data: null,
+            error: {
+                name: "InvalidToken",
+                statusCode: 403,
+                message: "token invalido"
+            }
+        });
+    }
+    try {
+        const decoded = decodeJwt(token);
+        req.user = decoded;
+        next();
+    }
+    catch (e) {
+        return res.status(401).json({
+            ok: false,
+            data: null,
+            error: {
+                name: "InvalidToken",
+                statusCode: 403,
+                message: "token invalido"
+            }
+        });
+    }
+}
+//# sourceMappingURL=validateToken.middleware.js.map

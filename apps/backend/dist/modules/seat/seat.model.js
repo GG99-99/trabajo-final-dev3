@@ -18,5 +18,13 @@ export const seatModel = {
             include: { schedules: true },
         });
     },
+    /***********
+    |   CREATE  |
+     ***********/
+    create: async (data) => {
+        return await prisma.seat.create({
+            data: { ...data }
+        });
+    }
 };
 //# sourceMappingURL=seat.model.js.map

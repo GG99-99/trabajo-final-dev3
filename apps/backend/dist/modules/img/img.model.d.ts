@@ -1,7 +1,20 @@
-import { CreateImg, GetImg, ImgWithRelations } from "@final/shared";
+import { Prisma } from "@final/db";
+import { CreateImg, GetImg, GetManyImg, ImgWithRelations } from "@final/shared";
 export declare const imgModel: {
-    create: (data: CreateImg) => Promise<ImgWithRelations>;
+    /*********
+    |   READ  |
+     *********/
     get: (filters: GetImg) => Promise<ImgWithRelations | null>;
-    getMany: (filters: GetImg) => Promise<ImgWithRelations[]>;
+    getMany: (filters: GetManyImg) => Promise<ImgWithRelations[]>;
+    /***********
+    |   CREATE  |
+     ***********/
+    create: (data: CreateImg, tx: Prisma.TransactionClient) => Promise<{
+        create_at: Date;
+        active: boolean;
+        img_id: number;
+        description: string | null;
+        source: Prisma.Bytes;
+    }>;
 };
 //# sourceMappingURL=img.model.d.ts.map

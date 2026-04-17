@@ -3,15 +3,8 @@ export type CreatePerson = {
     last_name: string;
     email: string;
     password: string;
-    type: "client";
-    medical_notes: string;
-} | {
-    first_name: string;
-    last_name: string;
-    email: string;
-    password: string;
-    type: "worker" | "cashier";
-    token: string;
+    type: "worker" | "cashier" | "client";
+    token?: string;
     specialty?: "realism" | "cartoon" | "other";
     medical_notes?: string;
 };

@@ -1,0 +1,32 @@
+// ── Config ──────────────────────────────────────────────
+const TOKEN_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const TOKEN_LENGTH = 32;
+// ── Token store en memoria ───────────────────────────────
+export const registerTokens = {
+    tokenWorker: { value: "", expiresAt: 0 },
+    tokenCashier: { value: "", expiresAt: 0 },
+};
+// ── Helpers ──────────────────────────────────────────────
+export function generateToken(length) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+export function isExpired(expiresAt) {
+    return Date.now() > expiresAt;
+}
+export function refreshIfExpired(key) {
+    if (isExpired(registerTokens[key].expiresAt)) {
+        registerTokens[key] = {
+            value: generateToken(TOKEN_LENGTH),
+            expiresAt: Date.now() + TOKEN_TTL_MS,
+        };
+    }
+}
+export function printRegisterTokens() {
+    console.log(registerTokens);
+}
+//# sourceMappingURL=registerTokens.js.map

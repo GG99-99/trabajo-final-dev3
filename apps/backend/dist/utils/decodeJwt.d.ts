@@ -1,4 +1,4 @@
+import { UserCredentials } from "@final/shared";
 import "dotenv/config";
-import jwt from "jsonwebtoken";
-export declare function decodeJwt(token: string): string | jwt.JwtPayload;
+export declare function decodeJwt(token: string): UserCredentials;
 //# sourceMappingURL=decodeJwt.d.ts.map

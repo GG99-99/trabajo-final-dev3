@@ -7,6 +7,9 @@ export const personService = {
     get: async (filters) => {
         return await personModel.get({ person_id: filters.person_id, email: filters.email, noPass: filters.noPass });
     },
+    getMany: async () => {
+        return await personModel.getMany();
+    },
     /***********
     |   CREATE  |
      ***********/

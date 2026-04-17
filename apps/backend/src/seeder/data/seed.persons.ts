@@ -1,74 +1,86 @@
 import prisma from "@final/db"
 import bcrypt from "bcrypt"
 import { PersonType } from "@final/db"
-import { CreatePerson } from "@final/shared"
 
-export const persons_seed: CreatePerson[] = [
-    {
-      first_name: "Juan",
-      last_name: "Perez",
-      email: "juan@test.com",
-      password: "123456",
-      type: "client",
-      medical_notes: "Piel sensible",
-    },
-    {
-      first_name: "Ana",
-      last_name: "Gomez",
-      email: "ana@test.com",
-      password: "123456",
-      type: "worker",
-      specialty: "realism",
-    },
-    {
-      first_name: "Jeremy",
-      last_name: "Garcia",
-      email: "j@test.com",
-      password: "123456",
-      type: "worker",
-      specialty: "realism",
-    },
-    {
-      first_name: "Luis",
-      last_name: "Martinez",
-      email: "luis@test.com",
-      password: "123456",
-      type: "cashier",
-    },
-  ]
+type PersonSeed = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  type: PersonType;
+  medical_notes?: string;
+  specialty?: string;
+}
+
+export const persons_seed: PersonSeed[] = [
+  {
+    first_name: "Juan",
+    last_name: "Perez",
+    email: "juan@test.com",
+    password: "",
+    type: "client",
+    medical_notes: "Piel sensible",
+  },
+  {
+    first_name: "Ana",
+    last_name: "Gomez",
+    email: "ana@test.com",
+    password: "123456",
+    type: "worker",
+    specialty: "realism",
+  },
+  {
+    first_name: "Jeremy",
+    last_name: "Garcia",
+    email: "j@test.com",
+    password: "123456",
+    type: "worker",
+    specialty: "realism",
+  },
+  {
+    first_name: "Luis",
+    last_name: "Martinez",
+    email: "luis@test.com",
+    password: "123456",
+    type: "cashier",
+  },
+]
 
 
 
 
-  const SALT_ROUNDS = 10
-  
-  export async function seedPerson() {
-    for (const personData of persons_seed) {
-      const { type, specialty, medical_notes, password, ...personInfo } = personData
-  
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
-  
-      await prisma.person.upsert({
-          where: { email: personInfo.email },
-          update: {},
-          create: {
-            ...personInfo,
-            password: hashedPassword,
-            type: type as PersonType,
-  
-            ...(type === "client" && {
-              client: { create: { medical_notes: medical_notes ?? ""  } },
-            }),
-  
-            ...(type === "worker" && {
-              worker: { create: { specialty: specialty || "other" } },
-            }),
-  
-            ...(type === "cashier" && {
-              cashier: { create: {} },
-            }),
-          },
-      })
+const SALT_ROUNDS = 10
+
+export async function seedPerson()
+{
+  for (const personData of persons_seed)
+  {
+    const { type, specialty, medical_notes, password, ...personInfo } = personData
+    const hashedPassword = await bcrypt.hash(password || "default_pass", SALT_ROUNDS)
+
+    // 1. Creamos la base del objeto 'create'
+    const createData: any = {
+      ...personInfo,
+      password: hashedPassword,
+      type: type,
     }
+
+    // 2. Añadimos la relación específica según el tipo
+    if (type === "client")
+    {
+      createData.client = { create: { medical_notes: medical_notes ?? "" } }
+    } else if (type === "worker")
+    {
+      createData.worker = { create: { specialty: specialty || "other" } }
+    } else if (type === "cashier")
+    {
+      createData.cashier = { create: {} }
+    }
+
+    await prisma.person.upsert({
+      where: { email: personInfo.email },
+      update: {},
+      create: createData, // Ahora el objeto está bien definido
+    })
   }
+}

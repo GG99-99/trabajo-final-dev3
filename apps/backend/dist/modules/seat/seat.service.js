@@ -6,5 +6,11 @@ export const seatService = {
     getMany: async (filters) => {
         return await seatModel.getMany(filters);
     },
+    /***********
+    |   CREATE  |
+     ***********/
+    create: async (data) => {
+        return await seatModel.create(data);
+    }
 };
 //# sourceMappingURL=seat.service.js.map

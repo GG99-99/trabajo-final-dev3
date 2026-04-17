@@ -1,21 +1,14 @@
+import { toEndOfDay, toStartOfDay } from "#backend/utils";
 import prisma from "@final/db";
 export const imgModel = {
-    create: async (data) => {
-        return (await prisma.img.create({
-            data: {
-                source: data.source,
-                description: data.description,
-            },
-            include: {
-                tattoos: true,
-            },
-        }));
-    },
+    /*********
+    |   READ  |
+     *********/
     get: async (filters) => {
-        if (!filters.img_id)
-            return null;
         return await prisma.img.findUnique({
-            where: { img_id: filters.img_id },
+            where: {
+                img_id: filters.img_id
+            },
             include: {
                 tattoos: true,
             },
@@ -24,12 +17,28 @@ export const imgModel = {
     getMany: async (filters) => {
         return await prisma.img.findMany({
             where: {
-                ...(filters.img_id && { img_id: filters.img_id }),
-                ...(filters.description && { description: { contains: filters.description } }),
+                ...(filters.date && {
+                    create_at: {
+                        gte: toStartOfDay(filters.date),
+                        lte: toEndOfDay(filters.date)
+                    }
+                }),
+                ...(filters.active && { active: filters.active }),
             },
             include: {
                 tattoos: true,
             },
+        });
+    },
+    /***********
+    |   CREATE  |
+     ***********/
+    create: async (data, tx) => {
+        return await tx.img.create({
+            data: {
+                source: data.source,
+                description: data.description,
+            }
         });
     },
 };

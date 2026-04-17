@@ -1,4 +1,5 @@
 import { authService } from "./auth.services.js";
+import { decodeJwt, printRegisterTokens, refreshIfExpired, registerTokens } from '#backend/utils';
 export const authController = {
     login: async (req, res) => {
         /*********************************************
@@ -31,6 +32,7 @@ export const authController = {
          *************************************/
         return res.json(response);
     },
+    // antes de este controller viene el middleware para validar el register token
     register: async (req, res) => {
         /***********************************
         |   OBTENER DATA  DEL REQUEST BODY  |
@@ -48,6 +50,22 @@ export const authController = {
         |   ENVIAR RESPUESTA EN FORMATO JSON  |
          *************************************/
         return res.json(response);
+    },
+    validateToken: async (req, res) => {
+        const token = decodeJwt(req.cookies.jwt_token);
+        return res.json({ ok: true, data: token, error: null });
+    },
+    getRegisterToken: async (req, res) => {
+        refreshIfExpired("tokenWorker");
+        refreshIfExpired("tokenCashier");
+        printRegisterTokens();
+        res.json({
+            ok: true,
+            data: {
+                expiresAt: registerTokens.tokenWorker.expiresAt, // ambos expiran al mismo tiempo
+            },
+            error: null
+        });
     }
 };
 //# sourceMappingURL=auth.controller.js.map

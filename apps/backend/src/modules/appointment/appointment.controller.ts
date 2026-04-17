@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { appointmentService } from "./appointment.service.js";
-import { AppointmentStatus } from "../../generated/prisma/index.js";
+import { AppointmentStatus } from "@final/db";
 
 export const appointmentController = {
   getMany: async (req: Request, res: Response) => {
@@ -21,7 +21,7 @@ export const appointmentController = {
   getBlocks: async (req: Request, res: Response) => {
     const worker_id = Number(req.query.worker_id);
     const date      = new Date(String(req.query.date));
-    const blocks    = await appointmentService.getBlocks(date, worker_id);
+    const blocks    = await appointmentService.getBlocks({date, worker_id});
     return res.json({ ok: true, data: blocks, error: null });
   },
 
@@ -34,7 +34,7 @@ export const appointmentController = {
   updateStatus: async (req: Request, res: Response) => {
     const appointment_id = Number(req.body.appointment_id ?? req.query.appointment_id);
     const status = (req.body.status ?? req.query.status) as AppointmentStatus;
-    const result = await appointmentService.updateStatus(appointment_id, status);
+    const result = await appointmentService.updateStatusDirect(appointment_id, status);
     return res.json({ ok: true, data: result, error: null });
   },
 };

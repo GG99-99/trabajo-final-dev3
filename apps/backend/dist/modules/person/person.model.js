@@ -9,6 +9,16 @@ export const personModel = {
             ...(filters.noPass && { omit: { password: true } })
         });
     },
+    getMany: async () => {
+        return await prisma.person.findMany({
+            omit: { password: true },
+            include: {
+                cashier: true,
+                client: true,
+                worker: true
+            }
+        });
+    },
     create: async (personData) => {
         // -- la password viene hasehada del servicio --
         const { type, specialty, medical_notes, ...personInfo } = personData;

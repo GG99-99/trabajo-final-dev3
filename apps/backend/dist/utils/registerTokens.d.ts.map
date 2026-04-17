@@ -1,0 +1,1 @@
+{"version":3,"file":"registerTokens.d.ts","sourceRoot":"","sources":["../../src/utils/registerTokens.ts"],"names":[],"mappings":"AAKA,eAAO,MAAM,cAAc;;;;;;;;;CAG1B,CAAC;AAGF,wBAAgB,aAAa,CAAC,MAAM,EAAE,MAAM,GAAG,MAAM,CAOpD;AAED,wBAAgB,SAAS,CAAC,SAAS,EAAE,MAAM,GAAG,OAAO,CAEpD;AAED,wBAAgB,gBAAgB,CAAC,GAAG,EAAE,MAAM,OAAO,cAAc,QAOhE;AAED,wBAAgB,mBAAmB,SAElC"}

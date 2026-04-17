@@ -4,10 +4,7 @@ export const attendanceModel = {
     create: async (data) => {
         return await prisma.attendance.create({
             data: {
-                day: data.day,
-                work_date: data.work_date,
-                status: data.status ?? true,
-                is_deleted: data.is_deleted ?? false,
+                ...data
             },
             include: {
                 assists: true,

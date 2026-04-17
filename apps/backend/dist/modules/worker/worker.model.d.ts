@@ -6,11 +6,11 @@ export declare const workerModel: {
             last_name: string;
             email: string;
             password: string | null;
-            type: import("@prisma/index.js").$Enums.PersonType;
+            type: import("@final/db").$Enums.PersonType;
         };
     } & {
         person_id: number;
-        specialty: import("@prisma/index.js").$Enums.WorkerSpecialty;
+        specialty: import("@final/db").$Enums.WorkerSpecialty;
         worker_id: number;
     }) | null>;
     getMany: () => Promise<({
@@ -20,11 +20,11 @@ export declare const workerModel: {
             last_name: string;
             email: string;
             password: string | null;
-            type: import("@prisma/index.js").$Enums.PersonType;
+            type: import("@final/db").$Enums.PersonType;
         };
     } & {
         person_id: number;
-        specialty: import("@prisma/index.js").$Enums.WorkerSpecialty;
+        specialty: import("@final/db").$Enums.WorkerSpecialty;
         worker_id: number;
     })[]>;
 };

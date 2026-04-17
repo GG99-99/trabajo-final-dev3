@@ -21,14 +21,14 @@ export type GetTattooMaterials = {
 export type CreateTattoo = {
     name: string;
     cost: number;
-    time: Date;
+    time: string;
     img_id: number;
 }
 
 export type CreateTattooRequest = {
     name: string;
     cost: number;
-    time: Date;
+    time: string;
     img: CreateImg;
     materials: {
         product_variant_id: number,
