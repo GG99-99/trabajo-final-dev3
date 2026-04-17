@@ -1,0 +1,1 @@
+{"version":3,"file":"seat.model.d.ts","sourceRoot":"","sources":["../../../src/modules/seat/seat.model.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,cAAc,EAAE,iBAAiB,EAAE,MAAM,eAAe,CAAC;AAElE,eAAO,MAAM,SAAS;mBACG,cAAc,KAAG,OAAO,CAAC,iBAAiB,GAAG,IAAI,CAAC;uBAS9C,cAAc,KAAG,OAAO,CAAC,iBAAiB,EAAE,CAAC;CAUzE,CAAC"}

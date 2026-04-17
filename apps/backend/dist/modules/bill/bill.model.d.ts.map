@@ -1,0 +1,1 @@
+{"version":3,"file":"bill.model.d.ts","sourceRoot":"","sources":["../../../src/modules/bill/bill.model.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,iBAAiB,EAAE,kBAAkB,EAAE,cAAc,EAAE,MAAM,eAAe,CAAA;AAGrF,eAAO,MAAM,SAAS;mBACG,cAAc,KAAG,OAAO,CAAC,iBAAiB,GAAG,IAAI,CAAC;uBAW9C,kBAAkB,KAAG,OAAO,CAAC,iBAAiB,EAAE,CAAC;CAmB7E,CAAA"}

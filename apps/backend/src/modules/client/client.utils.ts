@@ -1,8 +1,8 @@
-import { ClientPublic, ClientWithPerson } from "@final/shared";
+import { ClientPublic, ClientWithRelations } from "@final/shared";
 
 
 export const clienUtils = {
-    clientToPublic: (c: ClientWithPerson): ClientPublic => {
+    clientToPublic: (c: ClientWithRelations): ClientPublic => {
         return {
             client_id: c!.client_id,
             person_id: c!.person_id,

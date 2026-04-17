@@ -1,16 +1,10 @@
-export type WorkerWithPerson = {
-    worker_id: number;
-    person_id: number;
-    specialty: string;
-    person: {
-        person_id: number;
-        first_name: string;
-        last_name: string;
-        email: string;
-        password: string | null;
-        type: string;
+import prisma from "@final/db";
+import type { Prisma } from "@final/db";
+export type WorkerWithPerson = Prisma.Result<typeof prisma.worker, {
+    include: {
+        person: true;
     };
-} | null;
+}, 'findUnique'>;
 export type WorkerPublic = {
     worker_id: number;
     person_id: number;

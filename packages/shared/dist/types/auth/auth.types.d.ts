@@ -1,9 +1,12 @@
-/********************
-|   BODY OF REQUEST  |
- ********************/
+/****************
+|   POST METHOD  |
+ ****************/
 export type LoginData = {
     email: string;
     password: string;
+};
+export type RegisterToken = {
+    expiresAt: number;
 };
 /*****************
 |   API RESPONSE  |

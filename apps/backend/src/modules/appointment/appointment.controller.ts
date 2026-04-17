@@ -1,7 +1,6 @@
-import { Request, Response } from 'express'
-import { appointmentService } from './appointment.service.js'
-import { ApiResponse } from '@final/shared'
-import { AppointmentStatus } from '../../../generated/prisma/index.js'
+import { Request, Response } from "express";
+import { appointmentService } from "./appointment.service.js";
+import { AppointmentStatus } from "../../generated/prisma/index.js";
 
 export const appointmentController = {
   getMany: async (req: Request, res: Response) => {
@@ -14,31 +13,28 @@ export const appointmentController = {
       end:            req.query.end            ? String(req.query.end)            : undefined,
       date:           req.query.date           ? new Date(String(req.query.date)) : undefined,
       status:         req.query.status         ? req.query.status as AppointmentStatus : undefined,
-    }
-    const appointments = await appointmentService.getMany(filters)
-    const response: ApiResponse<typeof appointments> = { ok: true, data: appointments, error: null }
-    return res.json(response)
+    };
+    const appointments = await appointmentService.getMany(filters);
+    return res.json({ ok: true, data: appointments, error: null });
   },
 
   getBlocks: async (req: Request, res: Response) => {
-    const worker_id = Number(req.query.worker_id)
-    const date      = new Date(String(req.query.date))
-    const blocks    = await appointmentService.getBlocks(date, worker_id)
-    const response: ApiResponse<typeof blocks> = { ok: true, data: blocks, error: null }
-    return res.json(response)
+    const worker_id = Number(req.query.worker_id);
+    const date      = new Date(String(req.query.date));
+    const blocks    = await appointmentService.getBlocks(date, worker_id);
+    return res.json({ ok: true, data: blocks, error: null });
   },
 
   create: async (req: Request, res: Response) => {
-    const data = { ...req.body, date: new Date(req.body.date) }
-    const appointment = await appointmentService.create(data)
-    const response: ApiResponse<typeof appointment> = { ok: true, data: appointment, error: null }
-    return res.json(response)
+    const data = { ...req.body, date: new Date(req.body.date) };
+    const appointment = await appointmentService.create(data);
+    return res.json({ ok: true, data: appointment, error: null });
   },
 
   updateStatus: async (req: Request, res: Response) => {
-    const { appointment_id, status } = req.body
-    const result = await appointmentService.updateStatus(Number(appointment_id), status as AppointmentStatus)
-    const response: ApiResponse<typeof result> = { ok: true, data: result, error: null }
-    return res.json(response)
+    const appointment_id = Number(req.body.appointment_id ?? req.query.appointment_id);
+    const status = (req.body.status ?? req.query.status) as AppointmentStatus;
+    const result = await appointmentService.updateStatus(appointment_id, status);
+    return res.json({ ok: true, data: result, error: null });
   },
-}
+};

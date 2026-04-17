@@ -1,7 +1,9 @@
+import { parseString } from './../common/controller.utils.js';
 import { Request, Response} from 'express';
 import { authService } from "./auth.services.js"
-import { UserCredentials, ApiResponse, PersonForCreate, LoginData } from '@final/shared';
-import { Person } from '@prisma/index.js';
+import { UserCredentials, ApiResponse, CreatePerson, LoginData, RegisterToken } from '@final/shared';
+import { decodeJwt, printRegisterTokens, refreshIfExpired, registerTokens  } from '#backend/utils';
+
 
 export const authController = {
     login: async (req: Request, res: Response) => {
@@ -45,11 +47,12 @@ export const authController = {
         
     },
     
+    // antes de este controller viene el middleware para validar el register token
     register: async (req: Request, res: Response) => {
         /***********************************
         |   OBTENER DATA  DEL REQUEST BODY  |
          ***********************************/
-        const personData: PersonForCreate = req.body
+        const personData: CreatePerson = req.body
 
 
         /********************
@@ -66,7 +69,28 @@ export const authController = {
          *************************************/
         return res.json(response)
 
-    }
+    },
+
+    validateToken: async (req: Request, res: Response) => { 
+        const token = decodeJwt(req.cookies.jwt_token)
+        return res.json({ok: true, data: token, error: null})
+    },
+
+    getRegisterToken: async (req: Request, res: Response) => {
+        refreshIfExpired("tokenA");
+        refreshIfExpired("tokenB");
+        
+        printRegisterTokens()
+        
+
+        res.json({
+            ok: true,
+            data: {
+                expiresAt: registerTokens.tokenA.expiresAt, // ambos expiran al mismo tiempo
+            },
+            error: null
+        } as ApiResponse<RegisterToken>);
+}
 
 
 }

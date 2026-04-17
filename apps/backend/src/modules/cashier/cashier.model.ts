@@ -1,4 +1,4 @@
-import prisma from "#prisma"
+import prisma from "@final/db"
 
 export const cashierModel = {
     /*********
@@ -11,9 +11,11 @@ export const cashierModel = {
         })
     },
 
-    getAll: async () => {
+    getMany: async () => {
         return await prisma.cashier.findMany({
-            include: {person: true}
+            include: {
+                person: true
+            }
         })
     },
 

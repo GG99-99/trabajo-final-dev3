@@ -1,4 +1,4 @@
-import { CashierPublic, CashierWithPerson, PersonForCreate } from "@final/shared";
+import { CashierPublic, CashierWithPerson, CreatePerson } from "@final/shared";
 import { cashierModel } from "./cashier.model.js";
 import { personService } from "../person/person.service.js";
 import { cashierUtils } from "./cashier.utils.js";
@@ -7,11 +7,11 @@ export const cashierService = {
     get: async (cashier_id: number) => {
         return await cashierModel.get(cashier_id)
     },
-    getAll: async () => {
+    getMany: async () => {
         /********************************
         |   BUSCAR TODOS LOS CASHIERS  |
          ********************************/
-        const cashiers: CashierWithPerson[] = await cashierModel.getAll()
+        const cashiers: CashierWithPerson[] = await cashierModel.getMany()
         const publicCashiers: CashierPublic[] = []
 
         /***************************************************
@@ -25,7 +25,7 @@ export const cashierService = {
         return publicCashiers
 
     },
-    create: async (data: PersonForCreate)=>{
+    create: async (data: CreatePerson)=>{
         return personService.create(data)
     }
 }

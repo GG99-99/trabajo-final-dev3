@@ -14,8 +14,8 @@ export const workerService = {
         return w
     },
     
-    getAll: async (): Promise<WorkerPublic[]> => {
-        const ws: WorkerWithPerson[] = await workerModel.getAll()
+    getMany: async (): Promise<WorkerPublic[]> => {
+        const ws: WorkerWithPerson[] = await workerModel.getMany()
         if(ws.length === 0 ) return []
 
         const workersPublics: WorkerPublic[] = []

@@ -7,7 +7,7 @@
     // Environment Settings
     "module": "nodenext",      
     "moduleResolution": "nodenext",
-    "target": "ES2022",        
+    "target": "esnext",        
     "lib": ["ES2022"],         
     "types": ["node"],         
 
@@ -29,13 +29,12 @@
     "esModuleInterop": true,   
     "resolveJsonModule": true ,
 
-    "baseUrl": ".",
+    // "baseUrl": ".",
     "paths": {
-      "#backend/utils": ["src/utils/index.utils.ts"],
-      "#backend/middlewares": ["src/middlewares/index.middlewares.ts"],
-      "#prisma": ["src/lib/prisma.ts"],
-      "@prisma/*": ["./src/generated/prisma/*"],
-      "#looger": ["./src/logger/logger.ts"]
+      "#backend/utils": ["./src/utils/index.utils.ts"],
+      "#backend/middlewares": ["./src/middlewares/index.middlewares.ts"],
+      "#looger": ["./src/logger/logger.ts"],
+      "#prisma/tx": ["./src/lib/prisma.ts"]
     }
   },
   "include": ["src/**/*"],

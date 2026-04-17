@@ -12,3 +12,17 @@ export function diffTime(start: string, end: string) {
 
   return `${h}:${m}`;
 }
+
+
+
+export const toStartOfDay = (date: Date | string, offsetHours = -4) => {
+    const d = new Date(date);
+    d.setUTCHours(-offsetHours, 0, 0, 0);
+    return d;
+};
+
+export const toEndOfDay = (date: Date | string, offsetHours = -4) => {
+    const d = new Date(date);
+    d.setUTCHours(23 + (-offsetHours), 59, 59, 999);
+    return d;
+};

@@ -1,17 +1,18 @@
-import { ClientCreate, ApiErr, ClientPublic, ClientWithPerson } from "@final/shared";
+import { ClientCreate, ApiErr, ClientPublic } from "@final/shared";
 import { clientModel } from "./client.model.js";
 import { personService } from "../person/person.service.js";
 import { clienUtils } from "./client.utils.js";
+import { ClientWithRelations } from "@final/shared";
 
 export const clientService = {
     get: async (client_id: number) => {
         return await clientModel.get(client_id)
     },
-    getAll: async () => {
+    getMany: async () => {
         /******************************
         |   BUSCAR TODOS LOS CLIENTES  |
          ******************************/
-        const clients: ClientWithPerson[] = await clientModel.getAll()
+        const clients: ClientWithRelations[] = await clientModel.getMany()
         const publicClients: ClientPublic[] = []
 
         /***************************************************

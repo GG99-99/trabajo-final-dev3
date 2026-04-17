@@ -1,4 +1,4 @@
-import prisma from "#prisma"
+import prisma from "@final/db"
 
 export const authModel = {
     
