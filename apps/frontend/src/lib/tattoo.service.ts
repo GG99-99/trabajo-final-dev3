@@ -32,6 +32,9 @@ export type CreateTattooRequest = {
 }
 
 export const tattooService = {
+  /** GET /api/tattoos */
+  getMany: () => api.get<Tattoo[]>('/tattoos'),
+
   /** GET /api/tattoos/detail?tattoo_id= */
   getOne: (tattoo_id: number) =>
     api.get<Tattoo>('/tattoos/detail', { tattoo_id }),

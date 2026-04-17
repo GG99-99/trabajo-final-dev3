@@ -6,6 +6,7 @@
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
 import Icon from '@/componentes/Icon'
+import { useNavigate } from 'react-router-dom'
 
 // ── Datos ──────────────────────────────────────────────────────────────────
 const portraits = [
@@ -71,6 +72,7 @@ function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, targetId: string
 
 // ── Página ─────────────────────────────────────────────────────────────────
 export default function Home() {
+  const navigate = useNavigate()
   return (
     <SimpleBar style={{ height: '100svh', width: '100%' }} autoHide={false} forceVisible="y">
 
@@ -82,9 +84,13 @@ export default function Home() {
           <li><a href="#collection" onClick={(e) => handleNavClick(e, 'collection')}>Colección</a></li>
           <li><a href="#archive"    onClick={(e) => handleNavClick(e, 'archive')}>Archivo</a></li>
         </ul>
-        <button className="nav-cta">
+        <button className="nav-cta" onClick={()=>navigate("/login")}>
           <Icon name="mdi:login-variant" size={13} style={{ marginRight: 8, verticalAlign: 'middle' }} />
           Ingresar
+        </button>
+        <button className="nav-cta" onClick={()=>navigate("/book")} style={{ marginLeft: 8, background: 'transparent', border: '1px solid rgba(192,57,43,0.5)', color: 'var(--text-h)' }}>
+          <Icon name="mdi:calendar-plus" size={13} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+          Reservar
         </button>
       </nav>
 
@@ -103,9 +109,9 @@ export default function Home() {
             entre el artista y la eternidad.
           </p>
           <div className="hero-actions">
-            <button className="btn-primary">
-              <Icon name="mdi:view-grid-outline" size={13} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Explorar Colección
+            <button className="btn-primary" onClick={() => navigate('/book')}>
+              <Icon name="mdi:calendar-plus" size={13} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              Reservar Sesión
             </button>
             <button className="btn-ghost">
               <Icon name="mdi:book-open-page-variant-outline" size={13} style={{ marginRight: 8, verticalAlign: 'middle' }} />

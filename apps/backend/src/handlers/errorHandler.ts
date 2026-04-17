@@ -6,17 +6,17 @@ interface backendErr extends ApiErr {
 }
 
 export function errorHandler(err: backendErr, req: Request, res: Response, next: NextFunction) {
-    const statusCode = err.statusCode || 500; // Usa 500 si no hay statusCode definido
+    const statusCode = err.statusCode || 500
 
     const response: ApiResponse<void> = {
         ok: false,
         data: null,
         error: {
-            name: err.name,
+            name:       err.name    || 'InternalError',
             statusCode: statusCode,
-            message: err.message
+            message:    err.message || 'An unexpected error occurred'
         }
-    };
+    }
 
-    return res.status(statusCode).json(response); // Establece el status code correctamente
+    return res.status(statusCode).json(response)
 }

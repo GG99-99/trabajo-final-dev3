@@ -12,6 +12,11 @@ export const tattooController = {
     return res.json({ ok: true, data: tattoo, error: null });
   },
 
+  getMany: async (_req: Request, res: Response) => {
+    const tattoos = await tattooService.getMany();
+    return res.json({ ok: true, data: tattoos, error: null });
+  },
+
   getMaterials: async (req: Request, res: Response) => {
     const filters: GetTattooMaterials = {
       tattoo_id: Number(req.query.tattoo_id),

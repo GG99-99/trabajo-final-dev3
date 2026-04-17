@@ -71,6 +71,7 @@ model Person {
   email      String     @unique
   password   String?
   type       PersonType
+  is_deleted Boolean    @default(false)
 
   // Relations
   worker  Worker?

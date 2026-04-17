@@ -6,4 +6,5 @@ export const clientRouter: Router = Router();
 clientRouter
   .get("/", clientController.getMany)
   .get("/detail", clientController.get)
-  .post("/", clientController.create);
+  .post("/", clientController.create)
+  .delete("/:id", clientController.softDelete);

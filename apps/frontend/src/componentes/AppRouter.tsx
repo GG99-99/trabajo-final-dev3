@@ -10,6 +10,7 @@ import ForgotPassword from '@/pages/ForgotPassword'
 import CashierLogin  from '@/pages/CashierLogin'
 import CashierPOS    from '@/pages/CashierPOS'
 import AdminDashboard from '@/pages/AdminDashboard'
+import PublicBooking from '@/pages/PublicBooking'
 import NotFound      from '@/pages/NotFound'
 
 // ── Guards ─────────────────────────────────────────────────────────────────
@@ -30,15 +31,16 @@ export default function AppRouter() {
         <Route path="/register"       element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/cashier/login"  element={<CashierLogin />} />
+        <Route path="/book"           element={<PublicBooking />} />
 
         {/* ── Cashier (protegida) ── */}
         <Route path="/cashier/pos" element={
           <RequireAuth role="cashier"><CashierPOS /></RequireAuth>
         } />
 
-        {/* ── Admin (protegida, worker o cualquier autenticado) ── */}
+        {/* ── Admin (solo worker) ── */}
         <Route path="/admin" element={
-          <RequireAuth><AdminDashboard /></RequireAuth>
+          <RequireAuth role="worker"><AdminDashboard /></RequireAuth>
         } />
 
         {/* ── 404 ── */}

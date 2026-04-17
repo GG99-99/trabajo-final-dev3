@@ -13,6 +13,7 @@ export const clientModel = {
 
     getMany: async (): Promise<ClientWithRelations[]> => {
         return await prisma.client.findMany({
+            where: { person: { is_deleted: false } },
             include: {person: true}
         })
     },

@@ -14,7 +14,13 @@ export const personService = {
     getMany: async () => {
         return await personModel.getMany()
     },
-    
+
+    /***********
+    |   DELETE  |
+     ***********/
+    softDelete: async (person_id: number) => {
+        return await personModel.softDelete(person_id)
+    },
 
     /***********
     |   CREATE  |
@@ -23,10 +29,22 @@ export const personService = {
         /*************************************
         |   BUSCAR QUE EL EMAIL NO EXISTA YA  |
          *************************************/
-        if( await personService.get({email: personData.email, noPass: true})){
+        const existing = await personModel.getDeleted(personData.email)
+        if (existing) {
+            // Restore soft-deleted person with updated data
+            const hashPassword = personData.password
+                ? await bcrypt.hash(personData.password, 10)
+                : existing.password ?? ''
+            return await personModel.restore(existing.person_id, {
+                ...personData,
+                password: hashPassword,
+            })
+        }
+
+        if (await personService.get({ email: personData.email, noPass: true })) {
             throw({
-                statusCode: 409, 
-                name: "EmailAlreadyExist", 
+                statusCode: 409,
+                name: "EmailAlreadyExist",
                 message: "El correo electronico ya se encuetra en uso"
             } as ApiErr)
         }
@@ -36,10 +54,7 @@ export const personService = {
          ******************/
         const hashPassword = await bcrypt.hash(personData.password, 10)
         personData.password = hashPassword
-        
-        
 
-        
         /******************
         |   CREAR PERSONA  |
          ******************/
