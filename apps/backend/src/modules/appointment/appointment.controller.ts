@@ -19,22 +19,37 @@ export const appointmentController = {
   },
 
   getBlocks: async (req: Request, res: Response) => {
-    const worker_id = Number(req.query.worker_id);
-    const date      = new Date(String(req.query.date));
-    const blocks    = await appointmentService.getBlocks({date, worker_id});
-    return res.json({ ok: true, data: blocks, error: null });
+    try {
+      const worker_id  = Number(req.query.worker_id)
+      const dateString = String(req.query.date)
+      const blocks     = await appointmentService.getBlocks({
+        worker_id,
+        date: new Date(dateString + 'T12:00:00'),
+      })
+      return res.json({ ok: true, data: blocks, error: null })
+    } catch (err: any) {
+      console.error('[getBlocks error]', err)
+      return res.status(err?.statusCode || 500).json({
+        ok: false, data: null,
+        error: { name: err?.name || 'Error', statusCode: err?.statusCode || 500, message: err?.message || String(err) }
+      })
+    }
   },
 
   create: async (req: Request, res: Response) => {
-    const data = { ...req.body, date: new Date(req.body.date) };
-    const appointment = await appointmentService.create(data);
-    return res.json({ ok: true, data: appointment, error: null });
+    const rawDate = req.body.date
+    const dateStr = typeof rawDate === 'string'
+      ? rawDate.slice(0, 10)
+      : new Date(rawDate).toISOString().slice(0, 10)
+    const data = { ...req.body, date: new Date(dateStr + 'T12:00:00.000Z') }
+    const appointment = await appointmentService.create(data)
+    return res.json({ ok: true, data: appointment, error: null })
   },
 
   updateStatus: async (req: Request, res: Response) => {
-    const appointment_id = Number(req.body.appointment_id ?? req.query.appointment_id);
-    const status = (req.body.status ?? req.query.status) as AppointmentStatus;
-    const result = await appointmentService.updateStatusDirect(appointment_id, status);
-    return res.json({ ok: true, data: result, error: null });
+    const appointment_id = Number(req.body.appointment_id ?? req.query.appointment_id)
+    const status = (req.body.status ?? req.query.status) as AppointmentStatus
+    const result = await appointmentService.updateStatusDirect(appointment_id, status)
+    return res.json({ ok: true, data: result, error: null })
   },
 };

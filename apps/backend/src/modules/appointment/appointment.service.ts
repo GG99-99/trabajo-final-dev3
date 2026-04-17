@@ -20,9 +20,8 @@ export const appointmentService = {
             date: data.date,
             worker_id: data.worker_id
         })
-        // console.log(blocks)
-        let isOpen = false;
 
+        let isOpen = false;
         for(const block of blocks) {
             if(block.start <= data.start && data.end <= block.end) {
                 isOpen = true;
@@ -30,8 +29,11 @@ export const appointmentService = {
             }
         }
 
-        if(isOpen) return await appointmentModel.create(data)
-        return null
+        if(!isOpen) {
+            throw { statusCode: 409, name: 'SlotUnavailable', message: 'The selected time slot is not available.' }
+        }
+
+        return await appointmentModel.create(data)
     },
 
 
@@ -69,7 +71,9 @@ export const appointmentService = {
          ****************/
         type DayKey = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
         const days: DayKey[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-        const day = days[new Date(date).getUTCDay()] as DayKey
+        // Use local date to avoid UTC offset shifting the day
+        const localDate = new Date(date)
+        const day = days[localDate.getDay()] as DayKey
         /*************************************
         |   SERACH WORKER DAY  FROM SCHEDULE  |
          *************************************/
@@ -84,8 +88,11 @@ export const appointmentService = {
         }
 
         const daySchedule  = schedule[day] as ScheduleJsonDay
-        console.log(daySchedule)
 
+        // Si el día no está activo en el schedule, no hay bloques disponibles
+        if (!daySchedule || !daySchedule.active) {
+            return []
+        }
         /***************************
         |   DEFINE LIMITS OF BLOCK  |
          ***************************/

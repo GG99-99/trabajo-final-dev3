@@ -2,11 +2,15 @@ import Icon from '@/componentes/Icon'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import heroImg from '@/assets/hero.png'
+import LoginImage1 from '@/assets/LoginImage1.jpg'
+import LoginImage2 from '@/assets/LoginImage2.jpg'
+import LoginImage3 from '@/assets/LoginImage3.jpg'
+import LoginImage4 from '@/assets/LoginImage4.jpg'
 import { Link, useNavigate } from 'react-router-dom'
 import { authService } from '@/lib/auth.service'
 import { useAuth } from '@/context/AuthContext'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 const schema = yup.object({
   email: yup.string().email('Invalid email format').required('Email is required'),
@@ -22,6 +26,8 @@ export default function Login() {
   const { setUser } = useAuth()
   const navigate = useNavigate()
   const [apiError, setApiError] = useState<string | null>(null)
+  const images = [LoginImage1, LoginImage2, LoginImage3, LoginImage4];
+  const [currentImage, setCurrentImage] = useState(0);
 
   const onSubmit = async (data: FormData) => {
     setApiError(null)
@@ -33,8 +39,17 @@ export default function Login() {
     setUser(res.data)
     // redirect based on role
     if (res.data.type === 'cashier') navigate('/cashier/pos')
-    else navigate('/admin')
+    else if (res.data.type === 'worker') navigate('/admin')
+    else navigate('/') // client → home
   }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % images.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [images.length]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-0 selection:bg-[#ff5a66]/20">
@@ -42,24 +57,38 @@ export default function Login() {
 
         {/* LEFT PANEL */}
         <div className="relative hidden lg:block lg:w-[60%] bg-black overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImg})`, filter: 'grayscale(30%) brightness(0.7)' }}
-          />
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={currentImage}
+              src={images[currentImage]}
+              alt="Obsidian Studio"
+              className="absolute inset-0 h-full w-full object-cover"
+              initial={{ opacity: 0, scale: 1.08 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
+            />
+          </AnimatePresence>
+
           <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/30 to-black/90" />
           <div className="absolute inset-0 bg-linear-to-r from-black/20 via-transparent to-black/60" />
 
           <div className="absolute bottom-12 left-12 z-10">
             <h1
               className="text-[90px] font-light uppercase italic leading-[0.88] tracking-tight"
-              style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}
+              style={{ fontFamily: "Cormorant Garamond, Georgia, serif" }}
             >
-              <span className="block text-[#ff5a66] drop-shadow-[0_0_40px_rgba(255,90,102,0.5)]">Obsidian</span>
-              <span className="block text-[#ff5a66] drop-shadow-[0_0_40px_rgba(255,90,102,0.5)]">Archive</span>
+              <span className="block text-[#ff5a66] drop-shadow-[0_0_40px_rgba(255,90,102,0.5)]">
+                Obsidian
+              </span>
             </h1>
+
             <div className="mt-8 h-px w-20 bg-white/20" />
+
             <p className="mt-6 text-[10px] uppercase tracking-[0.4em] leading-relaxed text-white/40 max-w-[340px]">
-              Permanence. Precision. The digital<br />sanctuary for high-end somatic art.
+              Permanence. Precision. The digital
+              <br />
+              sanctuary for high-end somatic art.
             </p>
           </div>
         </div>
@@ -84,7 +113,6 @@ export default function Login() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
-              {/* Email */}
               <div className="group relative">
                 <label className="mb-3 block text-[9px] font-semibold uppercase tracking-[0.35em] text-white/30 transition-colors group-focus-within:text-[#ff5a66]">
                   Email Address

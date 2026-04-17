@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import SimpleBar from 'simplebar-react'
-import 'simplebar-react/dist/simplebar.min.css'
+import Scrollable from '@/componentes/Scrollable'
 import { Button } from '@/componentes/ui/button'
 import {
   Users, Calendar, DollarSign, TrendingUp,
@@ -11,6 +10,10 @@ import { useNavigate } from 'react-router-dom'
 import { appointmentService, type AppointmentPublic } from '@/lib/appointment.service'
 import { workerService, clientService } from '@/lib/people.service'
 import type { WorkerPublic, ClientPublic } from '@final/shared'
+import AppointmentsPage from './Appointments'
+import ClientsPage from './Clients'
+import WorkerSchedulePage from './WorkerSchedule'
+import logo from '@/assets/LogoObsidianWhite.png'
 
 type NavItem = { icon: React.ElementType; label: string; id: string }
 
@@ -77,27 +80,24 @@ export default function AdminDashboard() {
       <aside
         className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-[#1a1a1a] border-r border-white/10 transition-all duration-300 flex flex-col shrink-0 h-full`}
       >
-        {/* Logo / toggle */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
+        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between shrink-0 min-h-[60px]">
           {sidebarOpen && (
-            <h2
-              className="text-[20px] font-light text-white/95 truncate"
-              style={{ fontFamily: 'Cormorant Garamond, serif' }}
-            >
-              Admin Panel
-            </h2>
+            <img
+              src={logo}
+              alt="Obsidian Archive"
+              className="h-60 w-auto object-contain -m-18 -ml-4"
+            />
           )}
           <Button
             variant="ghost" size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-white/40 hover:text-white hover:bg-white/5 shrink-0"
+            className="text-white/40 hover:text-white hover:bg-white/5 shrink-0 ml-2"
           >
             <Menu className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Nav — scrollable if items overflow */}
-        <SimpleBar className="flex-1 min-h-0" style={{ height: '100%' }}>
+        <Scrollable className="flex-1 min-h-0" style={{ height: '100%' }}>
           <nav className="p-4 space-y-1">
             {NAV.map(item => (
               <Button
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
                     : 'text-white/40 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <item.icon className="w-5 h-5 shrink-0" />
+                <item.icon className="w-5 h-5 shrink-0 -ml-1" />
                 {sidebarOpen && (
                   <span className="ml-3 text-[11px] uppercase tracking-[0.15em]">
                     {item.label}
@@ -119,9 +119,8 @@ export default function AdminDashboard() {
               </Button>
             ))}
           </nav>
-        </SimpleBar>
+        </Scrollable>
 
-        {/* Logout — always pinned at bottom */}
         <div className="p-4 border-t border-white/10 shrink-0">
           <Button
             variant="ghost"
@@ -137,7 +136,14 @@ export default function AdminDashboard() {
       </aside>
 
       {/* ── MAIN CONTENT ── */}
-      <SimpleBar className="flex-1 min-w-0 h-full">
+      <Scrollable className="flex-1 min-w-0 h-full">
+        {activeTab === 'appointments' ? (
+          <AppointmentsPage />
+        ) : activeTab === 'clients' ? (
+          <ClientsPage />
+        ) : activeTab === 'staff' ? (
+          <WorkerSchedulePage />
+        ) : (
         <div className="p-8 max-w-7xl mx-auto space-y-8">
 
           {/* Header */}
@@ -283,7 +289,8 @@ export default function AdminDashboard() {
           </div>
 
         </div>
-      </SimpleBar>
+        )}
+      </Scrollable>
     </div>
   )
 }

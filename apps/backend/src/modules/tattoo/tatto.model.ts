@@ -11,6 +11,12 @@ export const tattooModel = {
         })
     },
 
+    getMany: async () => {
+        return await prisma.tattoo.findMany({
+            orderBy: { name: 'asc' }
+        })
+    },
+
     getMaterials: async (data: GetTattooMaterials) => {
         return await prisma.tattooMaterial.findMany({
             where: { ...data }

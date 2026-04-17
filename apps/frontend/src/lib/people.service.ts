@@ -41,6 +41,10 @@ export const clientService = {
     first_name: string; last_name: string; email: string
     password: string; type: 'client'; medical_notes?: string
   }) => api.post<ClientWithPerson>('/clients', data),
+
+  /** DELETE /api/clients/:id — soft delete */
+  softDelete: (client_id: number) =>
+    api.delete<boolean>(`/clients/${client_id}`),
 }
 
 // ── Cashiers ───────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authRouter } from "./modules/auth/auth.router.js";
+import { publicRouter } from "./modules/public/public.router.js";
 import { appointmentRouter } from "./modules/appointment/appointment.router.js";
 import { assistRouter } from "./modules/asists/assist.router.js";
 import { attendanceRouter } from "./modules/attendance/attendance.router.js";
@@ -24,6 +25,7 @@ import { workerRouter } from "./modules/worker/worker.router.js";
 export const router: Router = Router()
 
 router.use("/auth", authRouter)
+router.use("/public", publicRouter)
 router.use("/appointments", appointmentRouter)
 router.use("/assists", assistRouter)
 router.use("/attendances", attendanceRouter)
