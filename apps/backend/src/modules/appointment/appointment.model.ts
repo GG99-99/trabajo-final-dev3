@@ -28,8 +28,12 @@ export const appointmentModel = {
             },
             orderBy: { start: "asc" },
             include: {
-                worker: true,
-                client: true,
+                worker: {
+                    include: {person: true}
+                },
+                client: {
+                    include: {person: true}
+                },
                 tattoo: true,
                 bill: true
             }

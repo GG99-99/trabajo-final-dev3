@@ -60,8 +60,8 @@ namespace FinalDev3.Services.Models
 
     public class AppointmentWithRelationsDto : AppointmentDto
     {
-        public ClientPublicDto? Client { get; set; }
-        public WorkerPublicDto? Worker { get; set; }
+        public ClientWithRelationsDto? Client { get; set; }
+        public WorkerWithPersonDto? Worker { get; set; }
         public TattooWithImgDto? Tattoo { get; set; }
         public BillWithRelationsDto? Bill { get; set; }
     }
