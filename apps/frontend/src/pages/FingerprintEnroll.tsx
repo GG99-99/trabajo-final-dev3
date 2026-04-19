@@ -29,6 +29,11 @@ export default function FingerprintEnroll() {
   const [saving,    setSaving]    = useState(false)
   const [deleting,  setDeleting]  = useState(false)
   const [loginErr,  setLoginErr]  = useState<string | null>(null)
+  // Enrollment multi-step state
+  const REQUIRED_STEPS = 4
+  const [enrollSteps, setEnrollSteps] = useState<string[]>([])
+  const [currentStep, setCurrentStep] = useState(0)
+  const [stepLoading, setStepLoading] = useState(false)
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: yupResolver(schema)
@@ -60,19 +65,50 @@ export default function FingerprintEnroll() {
   }
 
   async function handleScan() {
-    setFpState('scanning')
+    if (stepLoading) return
+    setStepLoading(true)
     setCaptured(null)
     try {
-      const res = await fetch('http://localhost:5100/scan', { method: 'POST' })
+      // Capture one enrollment step
+      const res = await fetch('http://localhost:5100/enroll/step', { method: 'POST' })
       if (!res.ok) throw new Error('Device error')
       const data = await res.json()
-      if (!data.ok) throw new Error('Scan failed')
-      setCaptured(data.template)
-      setFpState('captured')
+      if (!data.ok) throw new Error(data.error ?? 'Scan failed')
+
+      const newSteps = [...enrollSteps, data.fmd_b64]
+      setEnrollSteps(newSteps)
+      setCurrentStep(newSteps.length)
+
+      if (newSteps.length >= REQUIRED_STEPS) {
+        setFpState('captured')
+        // Build the final template from all 4 feature sets
+        const finishRes = await fetch('http://localhost:5100/enroll/finish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fmds: newSteps }),
+        })
+        const finishData = await finishRes.json()
+        if (!finishData.ok) {
+          setEnrollSteps([]); setCurrentStep(0); setFpState('error')
+          flash('error', finishData.error ?? 'Enrollment failed. Please start over.')
+        } else {
+          setCaptured(finishData.template_b64)
+          flash('ok', 'All 4 scans captured successfully. Save your fingerprint.')
+        }
+      } else {
+        setFpState('idle')
+        flash('ok', `Scan ${newSteps.length} of ${REQUIRED_STEPS} — place finger again.`)
+      }
     } catch {
       setFpState('no_device')
       flash('error', 'Fingerprint device not available. Make sure the .NET service is running on port 5100.')
+    } finally {
+      setStepLoading(false)
     }
+  }
+
+  function resetEnrollment() {
+    setEnrollSteps([]); setCurrentStep(0); setCaptured(null); setFpState('idle')
   }
 
   async function handleSave() {
@@ -84,6 +120,7 @@ export default function FingerprintEnroll() {
     setExisting(res.data as any)
     setCaptured(null)
     setFpState('idle')
+    resetEnrollment()
     flash('ok', 'Fingerprint registered successfully.')
   }
 
@@ -190,12 +227,26 @@ export default function FingerprintEnroll() {
           {/* Scanner */}
           <div className="flex flex-col items-center gap-4 py-4">
             <Fingerprint className={`w-20 h-20 transition-colors ${fpColors[fpState]}`} />
-            <p className="text-[11px] text-white/30">
-              {fpState === 'idle'      && 'Ready to scan'}
-              {fpState === 'scanning'  && 'Place finger on reader...'}
-              {fpState === 'captured'  && 'Fingerprint captured ✓'}
-              {fpState === 'error'     && 'Scan failed'}
-              {fpState === 'no_device' && 'Device not available'}
+
+            {/* Step progress dots */}
+            <div className="flex items-center gap-2">
+              {Array.from({ length: REQUIRED_STEPS }).map((_, i) => (
+                <div key={i} className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                  i < currentStep ? 'bg-[#ff5a66]' : 'bg-white/10'
+                }`} />
+              ))}
+            </div>
+
+            <p className="text-[11px] text-white/30 text-center">
+              {stepLoading
+                ? 'Place finger on reader...'
+                : currentStep === 0
+                  ? 'Ready — place finger to start enrollment'
+                  : currentStep < REQUIRED_STEPS
+                    ? `${currentStep} of ${REQUIRED_STEPS} scans done — place finger again`
+                    : fpState === 'captured'
+                      ? 'All scans captured ✓'
+                      : 'Processing...'}
             </p>
           </div>
 
@@ -215,12 +266,26 @@ export default function FingerprintEnroll() {
           <div className="space-y-3">
             <button
               onClick={handleScan}
-              disabled={fpState === 'scanning'}
+              disabled={stepLoading || fpState === 'captured'}
               className="w-full h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#ff5a66]/40 text-white/60 hover:text-white text-[10px] font-bold uppercase tracking-[0.3em] rounded-sm disabled:opacity-40 transition-all flex items-center justify-center gap-2"
             >
-              <RefreshCw className={`w-4 h-4 ${fpState === 'scanning' ? 'animate-spin' : ''}`} />
-              {fpState === 'scanning' ? 'Scanning...' : existing ? 'Re-scan Fingerprint' : 'Scan Fingerprint'}
+              <RefreshCw className={`w-4 h-4 ${stepLoading ? 'animate-spin' : ''}`} />
+              {stepLoading
+                ? 'Scanning...'
+                : currentStep === 0
+                  ? existing ? 'Re-enroll Fingerprint' : 'Start Enrollment'
+                  : `Scan ${currentStep + 1} of ${REQUIRED_STEPS}`}
             </button>
+
+            {currentStep > 0 && fpState !== 'captured' && (
+              <button
+                type="button"
+                onClick={resetEnrollment}
+                className="w-full h-9 border border-white/10 text-white/30 hover:text-white/60 text-[10px] uppercase tracking-[0.2em] rounded-sm transition-all"
+              >
+                Start over
+              </button>
+            )}
 
             {captured && fpState === 'captured' && (
               <button

@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  Clock, CheckCircle, XCircle, Fingerprint,
+  CheckCircle, XCircle, Fingerprint,
   AlertTriangle, LogIn, LogOut, FlaskConical, Cpu
 } from 'lucide-react'
 import { punchService, fingerprintService, type TodayStatus, type FingerprintWithWorker } from '@/lib/punch.service'
 import { workerService } from '@/lib/people.service'
 import type { WorkerPublic } from '@final/shared'
 
-// ── helpers ────────────────────────────────────────────────────────────────
 const pad = (n: number) => String(n).padStart(2, '0')
 const fmtTime = (iso: string) => {
   const d = new Date(iso)
@@ -16,19 +15,21 @@ const fmtTime = (iso: string) => {
   return `${h % 12 || 12}:${pad(m)}:${pad(s)} ${period}`
 }
 
-type FpState = 'idle' | 'scanning' | 'matched' | 'no_match' | 'error' | 'no_device'
+type FpState = 'idle' | 'waiting' | 'scanning' | 'matched' | 'no_match' | 'error' | 'no_device'
 type Mode    = 'test' | 'real'
 
 const FP_LABELS: Record<FpState, string> = {
-  idle:      'Place finger on reader',
-  scanning:  'Scanning...',
+  idle:      'Press a button to start',
+  waiting:   'Place your finger on the reader...',
+  scanning:  'Reading fingerprint...',
   matched:   'Identity confirmed ✓',
   no_match:  'No match — try again',
   error:     'Scan error',
-  no_device: 'Device offline — manual mode',
+  no_device: 'Device offline',
 }
 const FP_COLORS: Record<FpState, string> = {
   idle:      'text-white/20',
+  waiting:   'text-yellow-400 animate-pulse',
   scanning:  'text-yellow-400 animate-pulse',
   matched:   'text-emerald-400',
   no_match:  'text-red-400',
@@ -36,39 +37,39 @@ const FP_COLORS: Record<FpState, string> = {
   no_device: 'text-white/20',
 }
 
-// ── component ──────────────────────────────────────────────────────────────
-export default function PunchStation() {
-  const [time, setTime]         = useState(new Date())
-  const [mode, setMode]         = useState<Mode>('test')
+const COUNTDOWN_SECS = 5
 
-  // test mode
-  const [workers, setWorkers]   = useState<WorkerPublic[]>([])
+export default function PunchStation() {
+  const [time, setTime]           = useState(new Date())
+  const [mode, setMode]           = useState<Mode>('test')
+
+  const [workers, setWorkers]     = useState<WorkerPublic[]>([])
   const [selWorker, setSelWorker] = useState<number | ''>('')
 
-  // real mode — identified via fingerprint
-  const [allFps, setAllFps]     = useState<FingerprintWithWorker[]>([])
+  const [allFps, setAllFps]                     = useState<FingerprintWithWorker[]>([])
   const [identifiedWorker, setIdentifiedWorker] = useState<WorkerPublic | null>(null)
 
-  const [status, setStatus]     = useState<TodayStatus | null>(null)
+  const [status, setStatus]               = useState<TodayStatus | null>(null)
   const [statusLoading, setStatusLoading] = useState(false)
-  const [fpState, setFpState]   = useState<FpState>('idle')
-  const [message, setMessage]   = useState<{ type: 'ok' | 'error' | 'warn'; text: string } | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [fpState, setFpState]             = useState<FpState>('idle')
+  const [countdown, setCountdown]         = useState<number | null>(null)
+  const [pendingAction, setPendingAction] = useState<'in' | 'out' | null>(null)
+  const [message, setMessage]             = useState<{ type: 'ok' | 'error' | 'warn'; text: string } | null>(null)
+  const [submitting, setSubmitting]       = useState(false)
 
-  // Live clock
+  const timerRef     = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
 
-  // Load workers + all fingerprints on mount
   useEffect(() => {
     workerService.getAll().then(r => { if (r.ok) setWorkers(r.data) })
     fingerprintService.getAll().then(r => { if (r.ok) setAllFps(r.data) })
   }, [])
 
-  // Load status when active worker changes
   const activeWorkerId = mode === 'test'
     ? (selWorker ? Number(selWorker) : null)
     : (identifiedWorker?.worker_id ?? null)
@@ -78,12 +79,14 @@ export default function PunchStation() {
     loadStatus(activeWorkerId)
   }, [activeWorkerId])
 
-  // Reset identified worker when switching modes
   useEffect(() => {
     setIdentifiedWorker(null)
     setStatus(null)
     setFpState('idle')
     setMessage(null)
+    setCountdown(null)
+    setPendingAction(null)
+    stopCountdown()
   }, [mode])
 
   async function loadStatus(worker_id: number) {
@@ -95,52 +98,89 @@ export default function PunchStation() {
 
   const flash = (type: 'ok' | 'error' | 'warn', text: string) => {
     setMessage({ type, text })
-    setTimeout(() => setMessage(null), 5000)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => setMessage(null), 7000)
   }
 
   const resetFpState = (delay = 3000) => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => setFpState('idle'), delay)
+    setTimeout(() => {
+      setFpState('idle')
+      setCountdown(null)
+      setPendingAction(null)
+    }, delay)
   }
 
-  // ── Real mode: identify worker via 1:N fingerprint scan ──────────────────
-  async function identifyWorker(): Promise<number | null> {
-    if (allFps.length === 0) {
-      flash('warn', 'No fingerprints registered in the system.')
-      return null
+  const stopCountdown = () => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current)
+      countdownRef.current = null
     }
+  }
 
-    setFpState('scanning')
+  // ── Countdown → then scan ─────────────────────────────────────────────────
+  function startCountdownAndScan(action: 'in' | 'out') {
+    stopCountdown()
+    setPendingAction(action)
+    setFpState('waiting')
     setIdentifiedWorker(null)
     setStatus(null)
+    setMessage(null)
+    setCountdown(COUNTDOWN_SECS)
+
+    let remaining = COUNTDOWN_SECS
+    countdownRef.current = setInterval(() => {
+      remaining -= 1
+      setCountdown(remaining)
+      if (remaining <= 0) {
+        stopCountdown()
+        setCountdown(null)
+        setFpState('scanning')
+        runIdentify(action)
+      }
+    }, 1000)
+  }
+
+  // ── Real mode: 1:N identify ───────────────────────────────────────────────
+  async function runIdentify(action: 'in' | 'out') {
+    if (allFps.length === 0) {
+      flash('warn', 'No fingerprints registered in the system.')
+      resetFpState(0)
+      return
+    }
 
     const templates = allFps.map(fp => ({
-      worker_id: fp.worker_id,
-      template:  fp.template,
+      worker_id: Number(fp.worker_id), // ensure number
+      template: fp.template,
     }))
 
     const result = await fingerprintService.identify(templates)
+    console.log('[Identify result]', result)
 
-    if (!result.ok || result.worker_id === null) {
+    if (!result.ok || !result.worker_id || result.worker_id === 0) {
       if (result.error?.includes('unavailable')) {
         setFpState('no_device')
-        flash('warn', 'Fingerprint device not available. Switch to Test mode.')
+        flash('warn', 'Device not available. Switch to Test mode.')
       } else {
         setFpState('no_match')
         flash('error', 'Fingerprint not recognized. Please try again.')
       }
-      resetFpState()
-      return null
+      resetFpState(3000)
+      return
     }
 
+    // Ensure worker_id is a number (API might return string)
+    const matchedId = Number(result.worker_id)
+    console.log('[Matched worker_id]', matchedId, 'workers:', workers.map(w => w.worker_id))
+
     setFpState('matched')
-    const worker = workers.find(w => w.worker_id === result.worker_id) ?? null
+    const worker = workers.find(w => Number(w.worker_id) === matchedId) ?? null
     setIdentifiedWorker(worker)
-    resetFpState(4000)
-    return result.worker_id
+
+    await new Promise(r => setTimeout(r, 1000))
+    await submitPunch(action, matchedId)
   }
 
-  // ── Test mode: verify fingerprint for selected worker ────────────────────
+  // ── Test mode: verify fingerprint ─────────────────────────────────────────
   async function verifySelectedWorker(): Promise<boolean> {
     if (!selWorker) return false
     setFpState('scanning')
@@ -151,7 +191,7 @@ export default function PunchStation() {
         setFpState('no_device')
         flash('warn', 'No fingerprint registered for this worker. Proceeding in test mode.')
         resetFpState()
-        return true // allow in test mode even without fingerprint
+        return true
       }
 
       const scanRes = await fetch('http://localhost:5100/scan', { method: 'POST' })
@@ -171,12 +211,11 @@ export default function PunchStation() {
         return true
       } else {
         setFpState('no_match')
-        flash('error', 'Fingerprint does not match.')
+        flash('error', 'Fingerprint does not match. Try again.')
         resetFpState()
         return false
       }
     } catch {
-      // Device offline in test mode — allow punch anyway
       setFpState('no_device')
       flash('warn', 'Device offline. Proceeding without fingerprint verification.')
       resetFpState()
@@ -184,57 +223,96 @@ export default function PunchStation() {
     }
   }
 
-  // ── Clock In ──────────────────────────────────────────────────────────────
-  async function handleClockIn() {
-    let worker_id: number | null = null
+  // ── Submit punch ──────────────────────────────────────────────────────────
+  async function submitPunch(action: 'in' | 'out', worker_id: number) {
+    const wid = Number(worker_id)
+    console.log('[submitPunch] action:', action, 'worker_id:', wid, typeof wid)
 
-    if (mode === 'real') {
-      worker_id = await identifyWorker()
-      if (!worker_id) return
-    } else {
-      if (!selWorker) { flash('error', 'Select a worker first.'); return }
-      const ok = await verifySelectedWorker()
-      if (!ok) return
-      worker_id = Number(selWorker)
+    if (!wid || isNaN(wid)) {
+      flash('error', 'Could not identify worker. Please try again.')
+      resetFpState(0)
+      return
+    }
+
+    // Pre-check status for immediate friendly feedback
+    const statusRes = await punchService.getTodayStatus(wid)
+    if (statusRes.ok) {
+      const s = statusRes.data
+      if (action === 'in' && s.clocked_in) {
+        const t = s.assist ? fmtTime(s.assist.start) : ''
+        flash('warn', `You already clocked in today${t ? ` at ${t}` : ''}.`)
+        setStatus(s)
+        resetFpState(0)
+        return
+      }
+      if (action === 'out' && !s.clocked_in) {
+        flash('warn', 'You need to clock in before clocking out.')
+        setStatus(s)
+        resetFpState(0)
+        return
+      }
+      if (action === 'out' && s.clocked_out) {
+        const t = s.assist?.close ? fmtTime(s.assist.close) : ''
+        flash('warn', `You already clocked out today${t ? ` at ${t}` : ''}.`)
+        setStatus(s)
+        resetFpState(0)
+        return
+      }
     }
 
     setSubmitting(true)
-    const res = await punchService.clockIn(worker_id)
+    const res = action === 'in'
+      ? await punchService.clockIn(wid)
+      : await punchService.clockOut(wid)
     setSubmitting(false)
-    if (!res.ok) { flash('error', res.error.message); return }
-    flash('ok', `Clock-in registered at ${fmtTime(res.data.start)}`)
-    loadStatus(worker_id)
+
+    if (!res.ok) {
+      const msg = res.error?.message ?? ''
+      if (msg.includes('entrada hoy') || msg.includes('clocked in'))
+        flash('warn', 'You already clocked in today.')
+      else if (msg.includes('salida hoy') || msg.includes('clocked out'))
+        flash('warn', 'You already clocked out today.')
+      else if (msg.includes('entrada') || msg.includes('clock in'))
+        flash('warn', 'You need to clock in before clocking out.')
+      else if (msg.includes('encontrado') || msg.includes('not found'))
+        flash('error', 'Worker not found in the system.')
+      else
+        flash('error', msg || 'Error registering. Please try again.')
+      loadStatus(wid)
+      resetFpState(0)
+      return
+    }
+
+    const t = action === 'in' ? res.data.start : res.data.close!
+    flash('ok', `${action === 'in' ? 'Clock-in' : 'Clock-out'} registered at ${fmtTime(t)} ✓`)
+    loadStatus(wid)
+    resetFpState(4000)
   }
 
-  // ── Clock Out ─────────────────────────────────────────────────────────────
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  async function handleClockIn() {
+    if (mode === 'real') { startCountdownAndScan('in'); return }
+    if (!selWorker) { flash('error', 'Select a worker first.'); return }
+    const ok = await verifySelectedWorker()
+    if (!ok) return
+    await submitPunch('in', Number(selWorker))
+  }
+
   async function handleClockOut() {
-    let worker_id: number | null = null
-
-    if (mode === 'real') {
-      worker_id = await identifyWorker()
-      if (!worker_id) return
-    } else {
-      if (!selWorker) { flash('error', 'Select a worker first.'); return }
-      const ok = await verifySelectedWorker()
-      if (!ok) return
-      worker_id = Number(selWorker)
-    }
-
-    setSubmitting(true)
-    const res = await punchService.clockOut(worker_id)
-    setSubmitting(false)
-    if (!res.ok) { flash('error', res.error.message); return }
-    flash('ok', `Clock-out registered at ${fmtTime(res.data.close!)}`)
-    loadStatus(worker_id)
+    if (mode === 'real') { startCountdownAndScan('out'); return }
+    if (!selWorker) { flash('error', 'Select a worker first.'); return }
+    const ok = await verifySelectedWorker()
+    if (!ok) return
+    await submitPunch('out', Number(selWorker))
   }
 
   const activeWorker = mode === 'test'
     ? workers.find(w => w.worker_id === Number(selWorker))
     : identifiedWorker
 
+  const isScanning  = fpState === 'waiting' || fpState === 'scanning'
   const canClockIn  = status && !status.clocked_in
   const canClockOut = status && status.clocked_in && !status.clocked_out
-  const isScanning  = fpState === 'scanning'
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 selection:bg-[#ff5a66]/20">
@@ -254,63 +332,41 @@ export default function PunchStation() {
         {/* Mode toggle */}
         <div className="flex items-center justify-center">
           <div className="flex items-center bg-[#1a1a1a] border border-white/10 rounded-sm p-1 gap-1">
-            <button
-              onClick={() => setMode('test')}
+            <button onClick={() => setMode('test')} disabled={isScanning}
               className={`flex items-center gap-2 px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-[0.2em] transition-all ${
-                mode === 'test'
-                  ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30'
-                  : 'text-white/30 hover:text-white/60'
-              }`}
-            >
-              <FlaskConical className="w-3.5 h-3.5" />
-              Test
+                mode === 'test' ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30' : 'text-white/30 hover:text-white/60'
+              }`}>
+              <FlaskConical className="w-3.5 h-3.5" /> Test
             </button>
-            <button
-              onClick={() => setMode('real')}
+            <button onClick={() => setMode('real')} disabled={isScanning}
               className={`flex items-center gap-2 px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-[0.2em] transition-all ${
-                mode === 'real'
-                  ? 'bg-[#ff5a66]/15 text-[#ff5a66] border border-[#ff5a66]/30'
-                  : 'text-white/30 hover:text-white/60'
-              }`}
-            >
-              <Cpu className="w-3.5 h-3.5" />
-              Real
+                mode === 'real' ? 'bg-[#ff5a66]/15 text-[#ff5a66] border border-[#ff5a66]/30' : 'text-white/30 hover:text-white/60'
+              }`}>
+              <Cpu className="w-3.5 h-3.5" /> Real
             </button>
           </div>
         </div>
 
-        {/* Mode description */}
-        <p className="text-center text-[10px] text-white/20 uppercase tracking-[0.2em]">
-          {mode === 'test'
-            ? 'Test mode — select worker manually'
-            : 'Real mode — identity via fingerprint reader'}
-        </p>
-
         {/* Card */}
         <div className="bg-[#1a1a1a] border border-white/10 rounded-sm p-8 space-y-6">
 
-          {/* Test mode: worker selector */}
+          {/* Test: worker selector */}
           {mode === 'test' && (
             <div>
               <label className="block text-[9px] font-semibold uppercase tracking-[0.3em] text-white/30 mb-2">
                 Select Worker
               </label>
-              <select
-                value={selWorker}
-                onChange={e => setSelWorker(e.target.value ? Number(e.target.value) : '')}
-                className="w-full bg-[#0a0a0a] border border-white/10 text-white/80 text-[13px] px-3 py-2.5 rounded-sm outline-none focus:border-[#ff5a66] cursor-pointer [&>option]:bg-[#1a1a1a]"
-              >
+              <select value={selWorker} onChange={e => setSelWorker(e.target.value ? Number(e.target.value) : '')}
+                className="w-full bg-[#0a0a0a] border border-white/10 text-white/80 text-[13px] px-3 py-2.5 rounded-sm outline-none focus:border-[#ff5a66] cursor-pointer [&>option]:bg-[#1a1a1a]">
                 <option value="">Select your name...</option>
                 {workers.map(w => (
-                  <option key={w.worker_id} value={w.worker_id}>
-                    {w.first_name} {w.last_name}
-                  </option>
+                  <option key={w.worker_id} value={w.worker_id}>{w.first_name} {w.last_name}</option>
                 ))}
               </select>
             </div>
           )}
 
-          {/* Real mode: identified worker display */}
+          {/* Real: identified worker */}
           {mode === 'real' && identifiedWorker && (
             <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/8 border border-emerald-500/20 rounded-sm">
               <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -318,29 +374,23 @@ export default function PunchStation() {
                 <p className="text-[13px] text-white/90 font-medium">
                   {identifiedWorker.first_name} {identifiedWorker.last_name}
                 </p>
-                <p className="text-[10px] text-white/30 uppercase tracking-[0.15em]">
-                  {identifiedWorker.specialty}
-                </p>
+                <p className="text-[10px] text-white/30 uppercase tracking-[0.15em]">{identifiedWorker.specialty}</p>
               </div>
             </div>
           )}
 
-          {/* Today status */}
+          {/* Today's status */}
           {activeWorkerId && !statusLoading && status && (
             <div className="bg-black/40 border border-white/8 rounded-sm px-4 py-3 space-y-2">
               <p className="text-[9px] uppercase tracking-[0.3em] text-white/25 mb-2">Today's Status</p>
               <div className="flex items-center gap-2">
-                {status.clocked_in
-                  ? <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  : <XCircle    className="w-4 h-4 text-white/20" />}
+                {status.clocked_in ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-white/20" />}
                 <span className="text-[12px] text-white/70">
                   Clock-in: {status.assist ? fmtTime(status.assist.start) : '—'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                {status.clocked_out
-                  ? <CheckCircle className="w-4 h-4 text-[#ff5a66]" />
-                  : <XCircle    className="w-4 h-4 text-white/20" />}
+                {status.clocked_out ? <CheckCircle className="w-4 h-4 text-[#ff5a66]" /> : <XCircle className="w-4 h-4 text-white/20" />}
                 <span className="text-[12px] text-white/70">
                   Clock-out: {status.assist?.close ? fmtTime(status.assist.close) : '—'}
                 </span>
@@ -348,10 +398,24 @@ export default function PunchStation() {
             </div>
           )}
 
-          {/* Fingerprint indicator */}
-          <div className="flex items-center justify-center gap-3 py-2">
-            <Fingerprint className={`w-8 h-8 transition-colors ${FP_COLORS[fpState]}`} />
-            <span className="text-[11px] text-white/30">{FP_LABELS[fpState]}</span>
+          {/* Fingerprint + countdown */}
+          <div className="flex flex-col items-center gap-3 py-2">
+            <div className="relative">
+              <Fingerprint className={`w-16 h-16 transition-colors ${FP_COLORS[fpState]}`} />
+              {countdown !== null && (
+                <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-yellow-500 flex items-center justify-center">
+                  <span className="text-black text-[12px] font-bold">{countdown}</span>
+                </div>
+              )}
+            </div>
+            <div className="text-center space-y-1">
+              <p className="text-[12px] text-white/50">{FP_LABELS[fpState]}</p>
+              {fpState === 'waiting' && pendingAction && (
+                <p className="text-[10px] text-yellow-400/60 uppercase tracking-[0.2em]">
+                  Preparing {pendingAction === 'in' ? 'clock-in' : 'clock-out'}...
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Message */}
@@ -366,35 +430,31 @@ export default function PunchStation() {
             </div>
           )}
 
-          {/* Action buttons */}
+          {/* Buttons */}
           <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={handleClockIn}
+            <button onClick={handleClockIn}
               disabled={
                 isScanning || submitting ||
                 (mode === 'test' && (!selWorker || !canClockIn)) ||
-                (mode === 'real' && (!!identifiedWorker && !canClockIn))
+                (mode === 'real' && !!identifiedWorker && !canClockIn)
               }
-              className="h-14 flex flex-col items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
+              className="h-14 flex flex-col items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all">
               <LogIn className="w-5 h-5" />
               <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Clock In</span>
             </button>
-            <button
-              onClick={handleClockOut}
+            <button onClick={handleClockOut}
               disabled={
                 isScanning || submitting ||
                 (mode === 'test' && (!selWorker || !canClockOut)) ||
-                (mode === 'real' && (!!identifiedWorker && !canClockOut))
+                (mode === 'real' && !!identifiedWorker && !canClockOut)
               }
-              className="h-14 flex flex-col items-center justify-center gap-1 bg-[#ff5a66] hover:bg-[#ff7078] text-black rounded-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
+              className="h-14 flex flex-col items-center justify-center gap-1 bg-[#ff5a66] hover:bg-[#ff7078] text-black rounded-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all">
               <LogOut className="w-5 h-5" />
               <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Clock Out</span>
             </button>
           </div>
 
-          {activeWorker && (
+          {activeWorker && !isScanning && (
             <p className="text-center text-[10px] text-white/20 uppercase tracking-[0.2em]">
               {activeWorker.first_name} {activeWorker.last_name}
               {activeWorker.specialty ? ` · ${activeWorker.specialty}` : ''}

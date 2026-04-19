@@ -73,16 +73,19 @@ export const fingerprintService = {
     api.delete<boolean>(`/fingerprints/${worker_id}`),
 
   /**
-   * POST http://localhost:5100/identify
-   * Sends all stored templates to the .NET service for 1:N matching.
-   * Returns the matched worker_id or null.
+   * Enrollment flow — 4 steps:
+   * 1. Call /enroll/step 4 times (each blocks until user places finger)
+   * 2. Call /enroll/finish with the 4 feature sets → returns template_b64
+   * 3. Store template_b64 in the database
    */
   identify: async (templates: { worker_id: number; template: string }[]): Promise<{ ok: boolean; worker_id: number | null; score: number; error?: string }> => {
     try {
       const res = await fetch('http://localhost:5100/identify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ templates }),
+        body: JSON.stringify({
+          templates: templates.map(t => ({ worker_id: t.worker_id, template_b64: t.template }))
+        }),
       })
       return res.json()
     } catch {

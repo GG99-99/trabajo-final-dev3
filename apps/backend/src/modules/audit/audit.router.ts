@@ -1,7 +1,7 @@
-import { Router } from 'express'
-import { auditController } from './audit.controller.js'
-import { validateJwtMiddleware, requireAdminTag } from '#backend/middlewares'
+import { Router } from "express"
+import { auditController } from "./audit.controller.js"
 
-export const auditRouter = Router()
+export const auditRouter: Router = Router()
 
-auditRouter.get('/', validateJwtMiddleware, requireAdminTag, auditController.getMany)
+auditRouter
+    .get("/", auditController.getMany)

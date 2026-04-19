@@ -8,7 +8,6 @@ const todayStr = () => {
 
 export const punchService = {
 
-    /** Get or create today's attendance record */
     getOrCreateAttendance: async () => {
         const today = todayStr()
         const existing = await prisma.attendance.findFirst({
@@ -20,11 +19,16 @@ export const punchService = {
         })
     },
 
-    /** Clock IN — start of shift */
     clockIn: async (worker_id: number) => {
+        // Validate worker exists
+        const worker = await prisma.worker.findUnique({ where: { worker_id } })
+        if (!worker) {
+            throw { statusCode: 404, name: 'WorkerNotFound', message: 'Trabajador no encontrado.' } as ApiErr
+        }
+
         const attendance = await punchService.getOrCreateAttendance()
 
-        // Check if already clocked in today
+        // Check already clocked in today
         const existing = await prisma.assist.findUnique({
             where: { worker_id_attendance_id: { worker_id, attendance_id: attendance.attendance_id } }
         })
@@ -43,8 +47,13 @@ export const punchService = {
         })
     },
 
-    /** Clock OUT — end of shift */
     clockOut: async (worker_id: number) => {
+        // Validate worker exists
+        const worker = await prisma.worker.findUnique({ where: { worker_id } })
+        if (!worker) {
+            throw { statusCode: 404, name: 'WorkerNotFound', message: 'Trabajador no encontrado.' } as ApiErr
+        }
+
         const attendance = await punchService.getOrCreateAttendance()
 
         const assist = await prisma.assist.findUnique({
@@ -65,7 +74,6 @@ export const punchService = {
         })
     },
 
-    /** Get today's status for a worker */
     getTodayStatus: async (worker_id: number) => {
         const attendance = await prisma.attendance.findFirst({
             where: { day: todayStr(), is_deleted: false }
@@ -84,14 +92,11 @@ export const punchService = {
         }
     },
 
-    /** Get history for a worker (or all workers) */
     getHistory: async (filters: { worker_id?: number; date?: string }) => {
         return await prisma.assist.findMany({
             where: {
                 ...(filters.worker_id && { worker_id: filters.worker_id }),
-                ...(filters.date && {
-                    attendance: { day: filters.date }
-                }),
+                ...(filters.date && { attendance: { day: filters.date } }),
                 is_deleted: false,
             },
             include: {
