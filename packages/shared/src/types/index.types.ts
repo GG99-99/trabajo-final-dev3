@@ -19,6 +19,7 @@ export * from './seat/seat.types.js'
 export * from './stockMovement/stockMovement.types.js'
 export * from './tatto/tattoo.type.js'
 export * from './product/product.types.js'
+export * from './audit/audit.types.js'
 
 
 /******************

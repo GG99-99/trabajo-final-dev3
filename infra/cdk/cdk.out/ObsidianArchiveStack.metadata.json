@@ -1,0 +1,74 @@
+{
+  "/ObsidianArchiveStack/BackendAccessKey": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BackendAccessKey"
+    }
+  ],
+  "/ObsidianArchiveStack/BucketName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BucketName"
+    }
+  ],
+  "/ObsidianArchiveStack/BucketUrl": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BucketUrl"
+    }
+  ],
+  "/ObsidianArchiveStack/AccessKeyId": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AccessKeyId"
+    }
+  ],
+  "/ObsidianArchiveStack/SecretAccessKey": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "SecretAccessKey"
+    }
+  ],
+  "/ObsidianArchiveStack/BootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BootstrapVersion"
+    }
+  ],
+  "/ObsidianArchiveStack/CheckBootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CheckBootstrapVersion"
+    }
+  ],
+  "/ObsidianArchiveStack/TattooImages/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "TattooImages7BFA533F"
+    }
+  ],
+  "/ObsidianArchiveStack/BackendUser/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BackendUser9F842ECE"
+    }
+  ],
+  "/ObsidianArchiveStack/CDKMetadata/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CDKMetadata"
+    }
+  ],
+  "/ObsidianArchiveStack/TattooImages/Policy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "TattooImagesPolicy4364BD13"
+    }
+  ],
+  "/ObsidianArchiveStack/BackendUser/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BackendUserDefaultPolicyEE951DCD"
+    }
+  ]
+}

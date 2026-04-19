@@ -5,7 +5,8 @@ import { publicBookingLimiter, ipDailyBookingGuard } from '../../middlewares/rat
 export const publicRouter: Router = Router()
 
 publicRouter
-  .get('/tattoos',  publicController.getTattoos)
-  .get('/workers',  publicController.getWorkers)
-  .get('/blocks',   publicController.getBlocks)
-  .post('/book',    publicBookingLimiter, ipDailyBookingGuard, publicController.book)
+  .get('/tattoos',     publicController.getTattoos)
+  .get('/workers',     publicController.getWorkers)
+  .get('/check-email', publicController.checkEmail)
+  .get('/blocks',      publicController.getBlocks)
+  .post('/book',       publicBookingLimiter, ipDailyBookingGuard, publicController.book)

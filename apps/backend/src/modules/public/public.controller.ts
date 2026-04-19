@@ -19,6 +19,30 @@ export const publicController = {
     return res.json({ ok: true, data: workers, error: null })
   },
 
+  /** GET /api/public/check-email?email= — check if email is already a client */
+  checkEmail: async (req: Request, res: Response) => {
+    const email = String(req.query.email ?? '')
+    if (!email) return res.status(400).json({ ok: false, data: null, error: { name: 'BadRequest', statusCode: 400, message: 'Email required' } })
+    const person = await personService.get({ email, noPass: true })
+
+    // Email belongs to a worker or cashier — block public booking
+    if (person && (person.type === 'worker' || person.type === 'cashier')) {
+      return res.json({
+        ok: true,
+        data: { exists: false, blocked: true, reason: 'staff' },
+        error: null
+      })
+    }
+
+    if (person && person.type === 'client') {
+      const clients = await clientService.getMany()
+      const client = clients.find(c => c.email === email)
+      return res.json({ ok: true, data: { exists: true, blocked: false, first_name: person.first_name, last_name: person.last_name, client_id: client?.client_id }, error: null })
+    }
+
+    return res.json({ ok: true, data: { exists: false, blocked: false }, error: null })
+  },
+
   /** GET /api/public/blocks?worker_id=&date= */
   getBlocks: async (req: Request, res: Response) => {
     const worker_id  = Number(req.query.worker_id)

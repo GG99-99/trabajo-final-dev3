@@ -11,13 +11,16 @@ import CashierLogin  from '@/pages/CashierLogin'
 import CashierPOS    from '@/pages/CashierPOS'
 import AdminDashboard from '@/pages/AdminDashboard'
 import PublicBooking from '@/pages/PublicBooking'
+import Catalog      from '@/pages/Catalog'
+import PunchStation  from '@/pages/PunchStation'
+import FingerprintEnroll from '@/pages/FingerprintEnroll'
 import NotFound      from '@/pages/NotFound'
 
 // ── Guards ─────────────────────────────────────────────────────────────────
-function RequireAuth({ children, role }: { children: ReactNode; role?: 'cashier' | 'worker' | 'client' }) {
+function RequireAuth({ children, roles }: { children: ReactNode; roles?: ('cashier' | 'worker' | 'client')[] }) {
   const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />
-  if (role && user.type !== role) return <Navigate to="/login" replace />
+  if (roles && !roles.includes(user.type as 'cashier' | 'worker' | 'client')) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
@@ -32,15 +35,18 @@ export default function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/cashier/login"  element={<CashierLogin />} />
         <Route path="/book"           element={<PublicBooking />} />
+        <Route path="/catalog"        element={<Catalog />} />
+        <Route path="/internal/punch"   element={<PunchStation />} />
+        <Route path="/internal/enroll"  element={<FingerprintEnroll />} />
 
         {/* ── Cashier (protegida) ── */}
         <Route path="/cashier/pos" element={
-          <RequireAuth role="cashier"><CashierPOS /></RequireAuth>
+          <RequireAuth roles={['cashier']}><CashierPOS /></RequireAuth>
         } />
 
-        {/* ── Admin (solo worker) ── */}
+        {/* ── Admin panel — worker y cashier (no client) ── */}
         <Route path="/admin" element={
-          <RequireAuth role="worker"><AdminDashboard /></RequireAuth>
+          <RequireAuth roles={['worker', 'cashier']}><AdminDashboard /></RequireAuth>
         } />
 
         {/* ── 404 ── */}

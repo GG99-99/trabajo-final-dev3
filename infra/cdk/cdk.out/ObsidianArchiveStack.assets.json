@@ -1,0 +1,21 @@
+{
+  "version": "53.0.0",
+  "files": {
+    "c4c4d40b1b5baba00cca9647817a73e4053ea98f1585a16ee311a9c1948cf4e8": {
+      "displayName": "ObsidianArchiveStack Template",
+      "source": {
+        "path": "ObsidianArchiveStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "640168450436-us-east-1-90de7114": {
+          "bucketName": "cdk-hnb659fds-assets-640168450436-us-east-1",
+          "objectKey": "c4c4d40b1b5baba00cca9647817a73e4053ea98f1585a16ee311a9c1948cf4e8.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::640168450436:role/cdk-hnb659fds-file-publishing-role-640168450436-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

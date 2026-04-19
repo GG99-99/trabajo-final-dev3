@@ -1,0 +1,279 @@
+{
+ "Description": "Obsidian Archive — S3 bucket for tattoo images",
+ "Resources": {
+  "TattooImages7BFA533F": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketName": "obsidian-archive-images-640168450436",
+    "CorsConfiguration": {
+     "CorsRules": [
+      {
+       "AllowedHeaders": [
+        "*"
+       ],
+       "AllowedMethods": [
+        "GET",
+        "PUT",
+        "POST",
+        "DELETE",
+        "HEAD"
+       ],
+       "AllowedOrigins": [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:3030"
+       ],
+       "MaxAge": 3600
+      }
+     ]
+    },
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 1
+       },
+       "Id": "CleanIncompleteUploads",
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "OwnershipControls": {
+     "Rules": [
+      {
+       "ObjectOwnership": "BucketOwnerEnforced"
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "IgnorePublicAcls": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ObsidianArchiveStack/TattooImages/Resource"
+   }
+  },
+  "TattooImagesPolicy4364BD13": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "TattooImages7BFA533F"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:GetObject",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "TattooImages7BFA533F",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ObsidianArchiveStack/TattooImages/Policy/Resource"
+   }
+  },
+  "BackendUser9F842ECE": {
+   "Type": "AWS::IAM::User",
+   "Properties": {
+    "UserName": "obsidian-archive-backend"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ObsidianArchiveStack/BackendUser/Resource"
+   }
+  },
+  "BackendUserDefaultPolicyEE951DCD": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "TattooImages7BFA533F",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "TattooImages7BFA533F",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "s3:DeleteObject*",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "TattooImages7BFA533F",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "BackendUserDefaultPolicyEE951DCD",
+    "Users": [
+     {
+      "Ref": "BackendUser9F842ECE"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ObsidianArchiveStack/BackendUser/DefaultPolicy/Resource"
+   }
+  },
+  "BackendAccessKey": {
+   "Type": "AWS::IAM::AccessKey",
+   "Properties": {
+    "UserName": {
+     "Ref": "BackendUser9F842ECE"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ObsidianArchiveStack/BackendAccessKey"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/0WKTQ7CIBBGz9I9jKTaA6hLFxqNa4PTMaG01HTApiHc3VRMWL33/dRQNwpUpWeW2FrZmyfEm9dohZ75EXkL8RDQkhfHl/tbxmXsDS6lzjkJoweId6ZpnX4sz2J7RGI+0ZLSGs/Bv4NPwo0tQcebT72DBlTVsTFyCs6bgeCa+QWaZtbVtAAAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "ObsidianArchiveStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "BucketName": {
+   "Description": "S3 bucket name",
+   "Value": {
+    "Ref": "TattooImages7BFA533F"
+   },
+   "Export": {
+    "Name": "ObsidianBucketName"
+   }
+  },
+  "BucketUrl": {
+   "Description": "Public base URL for images",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "TattooImages7BFA533F"
+      },
+      ".s3.us-east-1.amazonaws.com"
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "ObsidianBucketUrl"
+   }
+  },
+  "AccessKeyId": {
+   "Description": "IAM Access Key ID",
+   "Value": {
+    "Ref": "BackendAccessKey"
+   }
+  },
+  "SecretAccessKey": {
+   "Description": "IAM Secret Access Key",
+   "Value": {
+    "Fn::GetAtt": [
+     "BackendAccessKey",
+     "SecretAccessKey"
+    ]
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

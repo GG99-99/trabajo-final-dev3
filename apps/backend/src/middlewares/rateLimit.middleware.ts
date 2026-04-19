@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import type { Request, Response, NextFunction } from 'express'
 
 // ── In-memory store: IP → { date, count } ─────────────────────────────────
@@ -58,5 +58,5 @@ export const publicBookingLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.ip ?? 'unknown',
+  keyGenerator: (req) => ipKeyGenerator(req),
 })

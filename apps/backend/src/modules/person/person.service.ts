@@ -16,10 +16,34 @@ export const personService = {
     },
 
     /***********
+    |   UPDATE  |
+     ***********/
+    update: async (person_id: number, data: {
+        first_name?: string
+        last_name?: string
+        email?: string
+        password?: string
+        specialty?: string
+        medical_notes?: string
+    }) => {
+        // Hash password if provided
+        if (data.password) {
+            data.password = await bcrypt.hash(data.password, 10)
+        } else {
+            delete data.password
+        }
+        return await personModel.update(person_id, data)
+    },
+
+    /***********
     |   DELETE  |
      ***********/
     softDelete: async (person_id: number) => {
         return await personModel.softDelete(person_id)
+    },
+
+    ban: async (person_id: number, banned: boolean) => {
+        return await personModel.ban(person_id, banned)
     },
 
     /***********

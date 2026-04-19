@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Obsidian Archive — S3 bucket for tattoo images
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: obsidian-archive
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [dev, prod]
+
+Resources:
+
+  # ── S3 Bucket ──────────────────────────────────────────────────────────────
+  TattooImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-images-${Environment}-${AWS::AccountId}"
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ["*"]
+            AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+            AllowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:5174"
+              - "http://localhost:3030"
+            MaxAge: 3600
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+
+  TattooImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TattooImagesBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${TattooImagesBucket}/*"
+
+  # ── IAM User for backend (S3 only) ────────────────────────────────────────
+  BackendS3User:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub "${ProjectName}-backend-${Environment}"
+      Policies:
+        - PolicyName: S3TattooImages
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:DeleteObject
+                  - s3:GetObjectAcl
+                  - s3:PutObjectAcl
+                Resource: !Sub "arn:aws:s3:::${TattooImagesBucket}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${TattooImagesBucket}"
+
+  BackendS3UserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref BackendS3User
+
+Outputs:
+  BucketName:
+    Description: S3 bucket name for tattoo images
+    Value: !Ref TattooImagesBucket
+    Export:
+      Name: !Sub "${ProjectName}-bucket-name"
+
+  BucketUrl:
+    Description: Public base URL for images
+    Value: !Sub "https://${TattooImagesBucket}.s3.${AWS::Region}.amazonaws.com"
+    Export:
+      Name: !Sub "${ProjectName}-bucket-url"
+
+  AccessKeyId:
+    Description: IAM Access Key ID for backend
+    Value: !Ref BackendS3UserAccessKey
+
+  SecretAccessKey:
+    Description: IAM Secret Access Key for backend
+    Value: !GetAtt BackendS3UserAccessKey.SecretAccessKey
+
+  Region:
+    Description: AWS Region
+    Value: !Ref AWS::Region

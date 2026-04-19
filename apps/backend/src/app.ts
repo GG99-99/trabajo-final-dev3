@@ -1,5 +1,6 @@
 import './env.js'
 import express from "express";
+import { createServer } from 'http'
 import { Request, Response } from "express";
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
@@ -15,10 +16,13 @@ await mainSeeder()
 // -------------------------------------------------------- //
 import { errorHandler } from "./handlers/errorHandler.js";
 import { router as apiRouter } from "./api.router.js";
+import { initSocketIO } from "./modules/socket/socket.service.js";
+import { auditMiddleware } from "./middlewares/audit.middleware.js";
 
 
 
 const app = express()
+const httpServer = createServer(app)
 const PORT = Number(process.env.PORT) || 3030
 
 
@@ -49,6 +53,7 @@ app.get('/', (req: Request, res: Response) => {
 /******************
 |   ROUTER OF API  |
  ******************/
+app.use('/api', auditMiddleware)
 app.use('/api', apiRouter)
 
 /******************
@@ -56,7 +61,12 @@ app.use('/api', apiRouter)
  ******************/
 app.use(errorHandler)
 
+/*********************
+|   SOCKET.IO SETUP  |
+ *********************/
+initSocketIO(httpServer)
 
-app.listen(PORT, '0.0.0.0', ()=>{
+
+httpServer.listen(PORT, '0.0.0.0', ()=>{
     console.log(`Running on http://localhost:${PORT}`)
 })

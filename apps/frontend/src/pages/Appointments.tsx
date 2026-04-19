@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Scrollable from '@/componentes/Scrollable'
 import Tooltip from '@/componentes/Tooltip'
 import { Button } from '@/componentes/ui/button'
 import {
   Calendar, Plus, X, Clock, User,
-  UserCircle, Filter, RefreshCw, ChevronDown
+  UserCircle, Filter, RefreshCw, ChevronDown, AlertTriangle
 } from 'lucide-react'
 import { appointmentService, type Appointment, type AppointmentStatus } from '@/lib/appointment.service'
 import { workerService, clientService } from '@/lib/people.service'
@@ -15,6 +15,25 @@ import type { WorkerPublic, ClientPublic, AppointmentBlockTime } from '@final/sh
 const pad = (n: number) => String(n).padStart(2, '0')
 const toDateStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 const today = toDateStr(new Date())
+
+/** Format date for display — apt.date is already an ISO string with time */
+const formatDate = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+/**
+ * Compute the *effective* status of an appointment.
+ * - 'completed' or 'cancelled' → return as-is (final states)
+ * - 'expired' (stored) → return 'expired' (already expired, keep)
+ * - 'pending' → check if end datetime has passed; if so return 'expired', else 'pending'
+ */
+function getEffectiveStatus(apt: Appointment): AppointmentStatus {
+  if (apt.status === 'completed' || apt.status === 'cancelled') return apt.status
+  if (apt.status === 'expired') return 'expired'
+  // pending: combine ISO date with end time "HH:MM" to get full datetime
+  const datePart = apt.date.slice(0, 10) // "YYYY-MM-DD"
+  const apptEnd = new Date(`${datePart}T${apt.end}:00`)
+  return new Date() > apptEnd ? 'expired' : 'pending'
+}
 
 /** Convert "HH:MM" 24h → "H:MM AM/PM" */
 const to12h = (t: string) => {
@@ -72,6 +91,16 @@ const STATUS_STYLES: Record<AppointmentStatus, string> = {
 }
 const ALL_STATUSES: AppointmentStatus[] = ['pending', 'completed', 'expired', 'cancelled']
 
+/** Allowed manual transitions per effective status */
+function allowedActions(apt: Appointment): AppointmentStatus[] {
+  const eff = getEffectiveStatus(apt)
+  if (eff === 'completed') return ['pending']                // can undo completed → pending
+  if (eff === 'cancelled') return ['completed']              // cancelled → only completed
+  if (eff === 'expired')   return ['completed', 'cancelled'] // expired → only forward
+  // pending (stored) or pending (auto-expired, stored=pending but eff=expired handled above)
+  return ['completed', 'cancelled']
+}
+
 const selectCls = "w-full bg-[#0a0a0a] border border-white/10 text-white/80 text-[13px] px-3 py-2.5 rounded-sm outline-none focus:border-[#ff5a66] cursor-pointer appearance-none [&>option]:bg-[#1a1a1a] transition-colors"
 const labelCls  = "block text-[9px] font-semibold uppercase tracking-[0.3em] text-white/30 mb-2"
 
@@ -107,6 +136,9 @@ export default function Appointments() {
 
   // step 3 — client
   const [selClient, setSelClient] = useState<number | ''>('')
+
+  // Expired-warning state
+  const [dismissedExpiredIds, setDismissedExpiredIds] = useState<Set<number>>(new Set())
 
   useEffect(() => { loadAll() }, [])
 
@@ -182,12 +214,30 @@ export default function Appointments() {
   }
 
   // ── update status ─────────────────────────────────────────────────────────
-  const handleStatusChange = async (id: number, status: AppointmentStatus) => {
-    const res = await appointmentService.updateStatus(id, status)
-    if (res.ok) setAppointments(prev =>
-      prev.map(a => a.appointment_id === id ? { ...a, status } : a)
-    )
+  const handleStatusChange = async (id: number, newStatus: AppointmentStatus) => {
+    const apt = appointments.find(a => a.appointment_id === id)
+    if (!apt) return
+    const eff = getEffectiveStatus(apt)
+    // Guard: expired can only go to completed or cancelled (never back to expired)
+    if (eff === 'expired' && newStatus !== 'completed' && newStatus !== 'cancelled') return
+    // Guard: cancelled can only go to completed
+    if (eff === 'cancelled' && newStatus !== 'completed') return
+
+    const res = await appointmentService.updateStatus(id, newStatus)
+    if (res.ok) {
+      setAppointments(prev =>
+        prev.map(a => a.appointment_id === id ? { ...a, status: newStatus } : a)
+      )
+      // If user acted on an expired appt, dismiss its warning
+      setDismissedExpiredIds(prev => new Set([...prev, id]))
+    }
   }
+
+  // Dismiss warning for a single appointment — kept for potential future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const dismissWarning = useCallback((id: number) => {
+    setDismissedExpiredIds(prev => new Set([...prev, id]))
+  }, [])
 
   // ── label helpers ─────────────────────────────────────────────────────────
   const workerName = (id: number) => {
@@ -202,17 +252,44 @@ export default function Appointments() {
 
   // ── filtered list ─────────────────────────────────────────────────────────
   const filtered = appointments.filter(a => {
-    if (filterStatus && a.status !== filterStatus) return false
+    const eff = getEffectiveStatus(a)
+    if (filterStatus && eff !== filterStatus) return false
     if (filterWorker && a.worker_id !== Number(filterWorker)) return false
     if (filterDate   && !a.date.startsWith(filterDate)) return false
     return true
   })
+
+  // Appointments that are effectively expired, not yet actioned, and warning not dismissed
+  const expiredUnactioned = appointments.filter(a =>
+    getEffectiveStatus(a) === 'expired' &&
+    a.status !== 'completed' &&
+    a.status !== 'cancelled' &&
+    !dismissedExpiredIds.has(a.appointment_id)
+  )
 
   const selectedTattoo = tattoos.find(t => t.tattoo_id === Number(selTattoo))
   const step1Ready = selTattoo && selWorker && selDate
 
   return (
     <div className="h-full flex flex-col">
+
+      {/* ── EXPIRED WARNING BANNER ── */}
+      {expiredUnactioned.length > 0 && (
+        <div className="shrink-0 mx-8 mt-6 bg-yellow-500/10 border border-yellow-500/30 rounded-sm px-5 py-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
+            <p className="flex-1 text-[12px] text-yellow-300/80">
+              ⚠️ {expiredUnactioned.length} appointment{expiredUnactioned.length !== 1 ? 's' : ''} have expired without action. Please mark them as completed or cancelled.
+            </p>
+            <button
+              onClick={() => setDismissedExpiredIds(new Set(expiredUnactioned.map(a => a.appointment_id)))}
+              className="text-yellow-400/40 hover:text-yellow-400/80 transition-colors shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── TOP BAR ── */}
       <div className="shrink-0 px-8 pt-8 pb-6 flex items-center justify-between">
@@ -292,47 +369,62 @@ export default function Appointments() {
           </div>
         ) : (
           <div className="space-y-2">
-            <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto_auto] gap-4 px-4 pb-2 border-b border-white/10">
+            {/* Header row */}
+            <div className="grid items-center px-4 pb-2 border-b border-white/10"
+              style={{ gridTemplateColumns: 'minmax(140px,1fr) minmax(140px,1fr) 130px 160px 110px auto' }}>
               {['Client', 'Worker', 'Date', 'Time', 'Status', 'Actions'].map(h => (
                 <span key={h} className="text-[9px] uppercase tracking-[0.3em] text-white/30">{h}</span>
               ))}
             </div>
-            {filtered.map(apt => (
+            {filtered.map(apt => {
+              const eff = getEffectiveStatus(apt)
+              const actions = allowedActions(apt)
+              return (
               <div
                 key={apt.appointment_id}
-                className="grid grid-cols-[1fr_1fr_1fr_auto_auto_auto] gap-4 items-center px-4 py-4 bg-[#1a1a1a] border border-white/10 rounded-sm hover:border-[#ff5a66]/20 transition-colors"
+                className="grid items-center px-4 py-4 bg-[#1a1a1a] border border-white/10 rounded-sm hover:border-[#ff5a66]/20 transition-colors"
+                style={{ gridTemplateColumns: 'minmax(140px,1fr) minmax(140px,1fr) 130px 160px 110px auto' }}
               >
-                <div className="flex items-center gap-3 min-w-0">
+                {/* Client */}
+                <div className="flex items-center gap-3 min-w-0 pr-2">
                   <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center shrink-0">
                     <User className="w-4 h-4 text-white/40" />
                   </div>
-                  <span className="text-white/90 text-sm truncate">{clientName(apt.client_id)}</span>
+                  <div className="min-w-0">
+                    <p className="text-white/90 text-sm truncate">{clientName(apt.client_id)}</p>
+                    <p className="text-[10px] text-white/35 truncate">{clients.find(c => c.client_id === apt.client_id)?.email ?? ''}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 min-w-0">
+                {/* Worker */}
+                <div className="flex items-center gap-3 min-w-0 pr-2">
                   <div className="w-8 h-8 bg-[#ff5a66]/10 rounded-full flex items-center justify-center shrink-0">
                     <UserCircle className="w-4 h-4 text-[#ff5a66]" />
                   </div>
                   <span className="text-white/70 text-sm truncate">{workerName(apt.worker_id)}</span>
                 </div>
+                {/* Date */}
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-white/30 shrink-0" />
-                  <span className="text-white/70 text-sm">
-                    {new Date(apt.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </span>
+                  <span className="text-white/70 text-sm whitespace-nowrap">{formatDate(apt.date)}</span>
                 </div>
-                <div className="flex items-center gap-2 whitespace-nowrap">
+                {/* Time */}
+                <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-white/30 shrink-0" />
-                  <span className="text-white/70 text-sm">{timeRange(apt.start, apt.end)}</span>
+                  <span className="text-white/70 text-sm whitespace-nowrap">{timeRange(apt.start, apt.end)}</span>
                 </div>
-                <span className={`text-[9px] uppercase tracking-[0.2em] px-3 py-1 rounded-full border whitespace-nowrap ${STATUS_STYLES[apt.status]}`}>
-                  {apt.status}
+                {/* Status (effective) */}
+                <span className={`text-[9px] uppercase tracking-[0.2em] px-3 py-1 rounded-full border whitespace-nowrap w-fit ${STATUS_STYLES[eff]}`}>
+                  {eff}
                 </span>
-                <div className="flex items-center gap-1">
-                  {ALL_STATUSES.filter(s => s !== apt.status).map(s => (
+                {/* Actions */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  {actions.length === 0 ? (
+                    <span className="text-[9px] uppercase tracking-[0.15em] text-white/20">—</span>
+                  ) : actions.map(s => (
                     <Tooltip key={s} content={`Mark as ${s}`} position="top">
                       <button
                         onClick={() => handleStatusChange(apt.appointment_id, s)}
-                        className="text-[9px] uppercase tracking-[0.15em] px-2 py-1 text-white/30 hover:text-white/70 hover:bg-white/5 rounded transition-colors"
+                        className="text-[9px] uppercase tracking-[0.15em] px-2 py-1 text-white/30 hover:text-white/70 hover:bg-white/5 rounded transition-colors whitespace-nowrap"
                       >
                         {s.slice(0, 4)}
                       </button>
@@ -340,7 +432,7 @@ export default function Appointments() {
                   ))}
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </Scrollable>

@@ -71,6 +71,7 @@ model Person {
   email      String     @unique
   password   String?
   type       PersonType
+  tag        String?    // nullable for everyone; 'admin' grants superuser access
   is_deleted Boolean    @default(false)
 
   // Relations
@@ -97,6 +98,7 @@ model Worker {
   appointments Appointment[]
   assists      Assist[]
   noAssists    NoAssist[]
+  fingerprint  Fingerprint?
 
   @@map("worker")
 }
@@ -226,10 +228,12 @@ model StockMovement {
 
 model Img {
   img_id      Int     @id @default(autoincrement())
-  source      Bytes   @db.ByteA
+  source      Bytes?  @db.ByteA          // legacy blob (nullable for S3 images)
   description String?
   create_at   DateTime          @default(now())
   active      Boolean           @default(true)
+  s3_key      String?           // S3 object key
+  s3_url      String?           // public or presigned URL
 
   // Relations
   tattoos Tattoo[]
@@ -482,6 +486,25 @@ model Assist {
   @@map("assist")
 }
 
+/*****************
+|   AUDIT LOG     |
+ *****************/
+
+/// Registro de auditoría — cada acción relevante del sistema queda aquí.
+model AuditLog {
+  audit_id    Int      @id @default(autoincrement())
+  person_id   Int?     // null si es acción del sistema
+  action      String   // CREATE | UPDATE | DELETE | LOGIN | REGISTER | ...
+  entity      String   // appointment | bill | payment | person | ...
+  entity_id   String?
+  description String?
+  metadata    Json?
+  ip          String?
+  created_at  DateTime @default(now())
+
+  @@map("audit_log")
+}
+
 /// Registro de ausencia de un worker en una jornada concreta.
 model NoAssist {
   no_assist_id  Int      @id @default(autoincrement())
@@ -495,4 +518,23 @@ model NoAssist {
   worker     Worker     @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
 
   @@map("no_assist")
+}
+
+/*********************
+|   FINGERPRINT       |
+ *********************/
+
+/// Huella digital registrada por worker para el sistema de ponche.
+model Fingerprint {
+  fingerprint_id Int      @id @default(autoincrement())
+  worker_id      Int      @unique
+  template       String   // base64-encoded DP template
+  finger_index   Int      @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // Relations
+  worker Worker @relation(fields: [worker_id], references: [worker_id], onDelete: Cascade)
+
+  @@map("fingerprint")
 }

@@ -15,7 +15,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<UserCredentials | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? (JSON.parse(stored) as UserCredentials) : null
+      if (!stored) return null
+      const parsed = JSON.parse(stored) as UserCredentials
+      // If stored session predates the tag field, clear it to force re-login
+      if (!('tag' in parsed)) {
+        localStorage.removeItem(STORAGE_KEY)
+        return null
+      }
+      return parsed
     } catch {
       return null
     }
