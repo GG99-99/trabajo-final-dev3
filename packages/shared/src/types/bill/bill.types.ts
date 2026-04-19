@@ -58,7 +58,7 @@ export interface CreateBillDiscount {
 }
 
 export interface CreateBill {
-    client_id: number;
+    client_id?: number;
     worker_id: number;
     cashier_id: number;
     appointment_id?: number;
@@ -91,11 +91,17 @@ export type BillWithRelations = Prisma.Result<
     typeof prisma.bill,
     {
         include: {
-            details: true, 
-            tattoos: true, 
-            payments: true,
-            aggregates: true,
-            discounts: true
+            details: true;
+            tattoos: true;
+            payments: true;
+            aggregates: true;
+            discounts: true;
+            client: {
+                include: { person: true };
+            };
+            worker: {
+                include: { person: true };
+            };
         };
     },
     'findUnique'

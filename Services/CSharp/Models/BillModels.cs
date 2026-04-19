@@ -118,5 +118,7 @@ namespace FinalDev3.Services.Models
         public List<BillPaymentDto> Payments { get; set; } = new();
         public List<BillAggregateDto> Aggregates { get; set; } = new();
         public List<BillDiscountDto> Discounts { get; set; } = new();
+        public ClientWithRelationsDto? Client { get; set; }
+        public WorkerWithPersonDto? Worker { get; set; }
     }
 }

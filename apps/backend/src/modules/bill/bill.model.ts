@@ -15,7 +15,13 @@ export const billModel = {
                 tattoos: filters.relations || undefined, 
                 payments: filters.relations || undefined,
                 aggregates: filters.relations || undefined,
-                discounts: filters.relations || undefined
+                discounts: filters.relations || undefined,
+                client: {
+                    include: {person: filters.relations || undefined}
+                },
+                worker: {
+                    include: {person: filters.relations || undefined}
+                },
             }
         })
     },
@@ -32,11 +38,17 @@ export const billModel = {
 
             },
             include :{
-                details: filters.relations || undefined, 
-                tattoos: filters.relations || undefined, 
-                payments: filters.relations || undefined,
-                aggregates: filters.relations || undefined,
-                discounts: filters.relations || undefined
+                details: true, 
+                tattoos: true, 
+                payments: true,
+                aggregates: true,
+                discounts: true,
+                client: {
+                    include: {person: true}
+                },
+                worker: {
+                    include: {person: true}
+                },
             }
         })
     },

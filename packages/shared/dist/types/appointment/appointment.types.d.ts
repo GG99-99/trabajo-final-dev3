@@ -37,8 +37,16 @@ export type GetBlocks = {
  ************/
 export type AppointmentWithRelation = Prisma.Result<typeof prisma.appointment, {
     include: {
-        client: true;
-        worker: true;
+        client: {
+            include: {
+                person: true;
+            };
+        };
+        worker: {
+            include: {
+                person: true;
+            };
+        };
         tattoo: true;
         bill: true;
     };
