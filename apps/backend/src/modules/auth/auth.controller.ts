@@ -7,68 +7,33 @@ import { decodeJwt, printRegisterTokens, refreshIfExpired, registerTokens  } fro
 
 export const authController = {
     login: async (req: Request, res: Response) => {
-
-        /*********************************************
-        |   OBTENER DATA PARA EL LOGIN DE LA REQUEST  |
-         *********************************************/
         const dataLogin: LoginData = req.body
-
-        /****************************************************
-        |   LOGEAR AL USUARIO Y OBTENER LAS USERCREDENTIALS  |
-         ****************************************************/
         const userCredentials: UserCredentials = await authService.login(dataLogin)
-
-        /********************
-        |   CREAR JWT TOKEN  |
-         ********************/
         const token = authService.createToken(userCredentials)
 
-
-        /*********************************************
-        |   CREAR COOKIE QUE ALMACENARA EL TOKEN JWT  |
-         *********************************************/
         res.cookie("jwt_token", token, {
-            httpOnly: true, // con esto la cookie solo sera accesible desde el servidor
-            secure: process.env.NODE_ENV === "production", // para que solo funcione con https
-            sameSite: "lax", // el token solo se puede acceder en el mismo dominio
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
             maxAge: 1000 * 60 * 60,
           });
 
-        
-        /********************
-        |   CREAR RESPUESTA  |
-         ********************/
         const response: ApiResponse<UserCredentials> = { ok: true, data: userCredentials, error: null };
-
-        /*************************************
-        |   ENVIAR RESPUESTA EN FORMATO JSON  |
-         *************************************/
         return res.json(response)
-        
     },
-    
-    // antes de este controller viene el middleware para validar el register token
+
     register: async (req: Request, res: Response) => {
-        /***********************************
-        |   OBTENER DATA  DEL REQUEST BODY  |
-         ***********************************/
         const personData: CreatePerson = req.body
-
-
-        /********************
-        |   CREAR RESPUESTA  |
-         ********************/
+        // Token comes in the header (already validated by requireRegisterToken middleware)
+        // Pass it along so authService can match it to the correct role
+        const registrationToken = req.headers['x-registration-token'] as string
+        await authService.register({ ...personData, token: registrationToken })
         const response: ApiResponse<boolean> = {
             ok: true,
             data: true,
             error: null
         }
-
-        /*************************************
-        |   ENVIAR RESPUESTA EN FORMATO JSON  |
-         *************************************/
         return res.json(response)
-
     },
 
     validateToken: async (req: Request, res: Response) => { 
@@ -79,17 +44,68 @@ export const authController = {
     getRegisterToken: async (req: Request, res: Response) => {
         refreshIfExpired("tokenWorker");
         refreshIfExpired("tokenCashier");
-        
         printRegisterTokens()
-
         res.json({
             ok: true,
             data: {
-                expiresAt: registerTokens.tokenWorker.expiresAt, // ambos expiran al mismo tiempo
+                expiresAt: registerTokens.tokenWorker.expiresAt,
             },
             error: null
         } as ApiResponse<RegisterToken>);
-}
+    },
 
+    /**
+     * POST /api/auth/admin/tokens
+     * Solo accesible para usuarios con tag === 'admin'.
+     * Devuelve los tokens actuales (worker y cashier), regenerándolos si expiraron.
+     */
+    getAdminTokens: async (req: Request, res: Response) => {
+        refreshIfExpired("tokenWorker");
+        refreshIfExpired("tokenCashier");
 
+        return res.json({
+            ok: true,
+            data: {
+                tokenWorker: {
+                    value: registerTokens.tokenWorker.value,
+                    expiresAt: registerTokens.tokenWorker.expiresAt,
+                },
+                tokenCashier: {
+                    value: registerTokens.tokenCashier.value,
+                    expiresAt: registerTokens.tokenCashier.expiresAt,
+                },
+            },
+            error: null,
+        })
+    },
+
+    /**
+     * POST /api/auth/admin/tokens/refresh
+     * Fuerza la regeneración de ambos tokens (aunque no hayan expirado).
+     */
+    refreshAdminTokens: async (req: Request, res: Response) => {
+        // Force regenerate regardless of expiry
+        const { generateToken } = await import('#backend/utils')
+        const TTL = 10 * 60 * 1000
+
+        registerTokens.tokenWorker  = { value: generateToken(32), expiresAt: Date.now() + TTL }
+        registerTokens.tokenCashier = { value: generateToken(32), expiresAt: Date.now() + TTL }
+
+        printRegisterTokens()
+
+        return res.json({
+            ok: true,
+            data: {
+                tokenWorker: {
+                    value: registerTokens.tokenWorker.value,
+                    expiresAt: registerTokens.tokenWorker.expiresAt,
+                },
+                tokenCashier: {
+                    value: registerTokens.tokenCashier.value,
+                    expiresAt: registerTokens.tokenCashier.expiresAt,
+                },
+            },
+            error: null,
+        })
+    },
 }

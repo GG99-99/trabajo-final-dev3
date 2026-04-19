@@ -1,4 +1,4 @@
-import type { WorkerPublic, CashierWithPerson, ClientWithPerson } from '@final/shared'
+import type { WorkerPublic, CashierWithPerson, ClientPublic } from '@final/shared'
 import { api } from './api'
 
 // ── Workers ────────────────────────────────────────────────────────────────
@@ -14,6 +14,7 @@ export type WorkerWithPerson = {
     email: string
     password: string | null
     type: string
+    tag?: string | null
   }
 }
 
@@ -30,17 +31,17 @@ export const workerService = {
 
 export const clientService = {
   /** GET /api/clients */
-  getAll: () => api.get<ClientWithPerson[]>('/clients'),
+  getAll: () => api.get<ClientPublic[]>('/clients'),
 
   /** GET /api/clients/detail?client_id= */
   getOne: (client_id: number) =>
-    api.get<ClientWithPerson>('/clients/detail', { client_id }),
+    api.get<ClientPublic>('/clients/detail', { client_id }),
 
   /** POST /api/clients */
   create: (data: {
     first_name: string; last_name: string; email: string
     password: string; type: 'client'; medical_notes?: string
-  }) => api.post<ClientWithPerson>('/clients', data),
+  }) => api.post<ClientPublic>('/clients', data),
 
   /** DELETE /api/clients/:id — soft delete */
   softDelete: (client_id: number) =>
@@ -64,21 +65,38 @@ export const cashierService = {
   }) => api.post<CashierWithPerson>('/cashiers', data),
 }
 
-// ── Persons ────────────────────────────────────────────────────────────────
+// ── Persons (generic — used for settings/admin) ───────────────────────────
 
-export type Person = {
+export type PersonFull = {
   person_id: number
   first_name: string
   last_name: string
   email: string
-  password: string | null
   type: 'client' | 'worker' | 'cashier'
+  tag?: string | null
+  is_deleted: boolean
+  worker?:  { worker_id: number; specialty: string } | null
+  client?:  { client_id: number; medical_notes: string | null } | null
+  cashier?: { cashier_id: number } | null
+}
+
+export type UpdatePersonPayload = {
+  person_id: number
+  first_name?: string
+  last_name?: string
+  email?: string
+  password?: string
+  specialty?: string
+  medical_notes?: string
 }
 
 export const personService = {
   /** GET /api/persons/detail */
   getOne: (filters: { person_id?: number; email?: string; noPass: boolean }) =>
-    api.get<Person>('/persons/detail', filters as Record<string, unknown>),
+    api.get<PersonFull>('/persons/detail', filters as Record<string, unknown>),
+
+  /** GET /api/persons/all */
+  getAll: () => api.get<PersonFull[]>('/persons/all'),
 
   /** POST /api/persons */
   create: (data: {
@@ -86,5 +104,17 @@ export const personService = {
     type: 'client' | 'worker' | 'cashier'
     specialty?: 'realism' | 'cartoon' | 'other'
     medical_notes?: string
-  }) => api.post<Person>('/persons', data),
+  }) => api.post<PersonFull>('/persons', data),
+
+  /** PUT /api/persons/update */
+  update: (data: UpdatePersonPayload) =>
+    api.put<PersonFull>('/persons/update', data),
+
+  /** PUT /api/persons/ban  — toggle ban */
+  ban: (person_id: number, banned: boolean) =>
+    api.put<PersonFull>('/persons/ban', { person_id, banned }),
+
+  /** DELETE /api/persons/:id — hard soft-delete */
+  softDelete: (person_id: number) =>
+    api.delete<boolean>(`/persons/${person_id}`),
 }

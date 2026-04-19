@@ -3,7 +3,7 @@ import Scrollable from '@/componentes/Scrollable'
 import { Button } from '@/componentes/ui/button'
 import {
   Users, Calendar, DollarSign, TrendingUp,
-  Settings, LogOut, Menu, Home, UserCircle, ClipboardList
+  Settings, LogOut, Menu, Home, UserCircle, ClipboardList, Activity, Clock
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -11,19 +11,25 @@ import { appointmentService, type AppointmentPublic } from '@/lib/appointment.se
 import { workerService, clientService } from '@/lib/people.service'
 import type { WorkerPublic, ClientPublic } from '@final/shared'
 import AppointmentsPage from './Appointments'
+import PaymentsPage from './Payments'
+import SettingsPage from './Settings'
 import ClientsPage from './Clients'
 import WorkerSchedulePage from './WorkerSchedule'
+import AttendanceHistory from './AttendanceHistory'
+import OnlineUsers from '@/componentes/OnlineUsers'
+import { useOnlineUsers } from '@/hooks/useOnlineUsers'
 import logo from '@/assets/LogoObsidianWhite.png'
 
-type NavItem = { icon: React.ElementType; label: string; id: string }
+type NavItem = { icon: React.ElementType; label: string; id: string; adminOnly?: boolean }
 
 const NAV: NavItem[] = [
   { icon: Home,          label: 'Dashboard',    id: 'dashboard' },
   { icon: Calendar,      label: 'Appointments', id: 'appointments' },
   { icon: Users,         label: 'Clients',      id: 'clients' },
   { icon: UserCircle,    label: 'Staff',        id: 'staff' },
-  { icon: ClipboardList, label: 'Services',     id: 'services' },
+  { icon: Clock,         label: 'Attendance',   id: 'attendance' },
   { icon: DollarSign,    label: 'Payments',     id: 'payments' },
+  { icon: Activity,      label: 'Activity',     id: 'activity', adminOnly: true },
   { icon: Settings,      label: 'Settings',     id: 'settings' },
 ]
 
@@ -32,6 +38,21 @@ const statusStyle: Record<string, string> = {
   completed: 'bg-[#ff5a66]/10 text-[#ff5a66] border-[#ff5a66]/20',
   expired:   'bg-white/5 text-white/30 border-white/10',
   cancelled: 'bg-red-900/20 text-red-400 border-red-500/20',
+}
+
+/** Parse a YYYY-MM-DD date string safely — avoids UTC offset producing "Invalid Date" */
+const parseDateStr = (dateVal: string | Date): Date => {
+  const s = typeof dateVal === 'string' ? dateVal : dateVal.toISOString()
+  return new Date(s.slice(0, 10) + 'T12:00:00') // local noon, no TZ shift
+}
+
+/** Compute effective status in real-time */
+function effectiveDashStatus(apt: AppointmentPublic): string {
+  if (apt.status === 'completed' || apt.status === 'cancelled') return apt.status
+  const apptEnd = parseDateStr(apt.date)
+  const [endH, endM] = (apt.end ?? '').split(':').map(Number)
+  apptEnd.setHours(endH ?? 0, endM ?? 0, 0, 0)
+  return new Date() > apptEnd ? 'expired' : 'pending'
 }
 
 export default function AdminDashboard() {
@@ -44,6 +65,9 @@ export default function AdminDashboard() {
   const [workers, setWorkers]           = useState<WorkerPublic[]>([])
   const [clients, setClients]           = useState<ClientPublic[]>([])
   const [loading, setLoading]           = useState(true)
+
+  // ─── Real-time online users ───────────────────────────────────────────────
+  const { onlineUsers, connected } = useOnlineUsers(user)
 
   useEffect(() => {
     async function load() {
@@ -64,6 +88,11 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     setUser(null)
     navigate('/login')
+  }
+
+  const workerName = (id: number) => {
+    const w = workers.find(w => w.worker_id === id)
+    return w ? `${w.first_name} ${w.last_name}` : `#${id}`
   }
 
   const stats = [
@@ -99,7 +128,7 @@ export default function AdminDashboard() {
 
         <Scrollable className="flex-1 min-h-0" style={{ height: '100%' }}>
           <nav className="p-4 space-y-1">
-            {NAV.map(item => (
+            {NAV.filter(item => !item.adminOnly || user?.tag === 'admin').map(item => (
               <Button
                 key={item.id}
                 variant="ghost"
@@ -136,6 +165,12 @@ export default function AdminDashboard() {
       </aside>
 
       {/* ── MAIN CONTENT ── */}
+      {activeTab === 'payments' ? (
+        // Payments needs full height control for its split panel — no Scrollable wrapper
+        <div className="flex-1 min-w-0 h-full overflow-hidden">
+          <PaymentsPage />
+        </div>
+      ) : (
       <Scrollable className="flex-1 min-w-0 h-full">
         {activeTab === 'appointments' ? (
           <AppointmentsPage />
@@ -143,6 +178,12 @@ export default function AdminDashboard() {
           <ClientsPage />
         ) : activeTab === 'staff' ? (
           <WorkerSchedulePage />
+        ) : activeTab === 'attendance' ? (
+          <AttendanceHistory />
+        ) : activeTab === 'activity' ? (
+          user?.tag === 'admin' ? <AttendanceHistory /> : null
+        ) : activeTab === 'settings' ? (
+          <SettingsPage />
         ) : (
         <div className="p-8 max-w-7xl mx-auto space-y-8">
 
@@ -197,6 +238,9 @@ export default function AdminDashboard() {
             ))}
           </div>
 
+          {/* ── ONLINE USERS WIDGET ── */}
+          <OnlineUsers users={onlineUsers} connected={connected} />
+
           {/* Appointments */}
           <div className="bg-[#1a1a1a] border border-white/10 rounded-sm p-6">
             <div className="mb-6">
@@ -229,16 +273,16 @@ export default function AdminDashboard() {
                       <div>
                         <p className="text-white/90 font-medium text-sm">Client #{apt.client_id}</p>
                         <p className="text-[10px] uppercase tracking-[0.15em] text-white/40">
-                          Worker #{apt.worker_id} · {apt.start} – {apt.end}
+                          {workerName(apt.worker_id)} · {apt.start} – {apt.end}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <p className="text-white/60 text-sm">
-                        {new Date(apt.date).toLocaleDateString()}
+                        {parseDateStr(apt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
-                      <span className={`text-[9px] uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${statusStyle[apt.status]}`}>
-                        {apt.status}
+                      <span className={`text-[9px] uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${statusStyle[effectiveDashStatus(apt)]}`}>
+                        {effectiveDashStatus(apt)}
                       </span>
                     </div>
                   </div>
@@ -291,6 +335,7 @@ export default function AdminDashboard() {
         </div>
         )}
       </Scrollable>
+      )}
     </div>
   )
 }

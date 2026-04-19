@@ -1,6 +1,6 @@
 import { api } from './api'
 
-export type BillStatus = 'pending' | 'paid' | 'cancelled'
+export type BillStatus = 'pending' | 'partially' | 'paid' | 'cancelled' | 'refunded'
 export type PaymentMethod = 'cash' | 'credit_card' | 'transfer'
 
 export type Bill = {
@@ -20,10 +20,12 @@ export type Bill = {
 export type Payment = {
   payment_id: number
   bill_id: number
+  cashier_id: number
   create_at: string
   amount: number
   method: PaymentMethod
   transaction_ref: string
+  is_refunded: boolean
 }
 
 export type BillProductItem = {
@@ -78,7 +80,7 @@ export const billService = {
 
   /** GET /api/bills/total */
   getTotal: (bill_id: number) =>
-    api.get<number>('/bills/total', { bill_id }),
+    api.get<{ bill_id: number; total: number; total_discount: number; total_after_discount: number; debt: number; overpaid: number }>('/bills/total', { bill_id }),
 
   /** GET /api/bills/stock-movements */
   getStockMovements: (bill_id: number) =>

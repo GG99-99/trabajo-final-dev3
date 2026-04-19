@@ -21,7 +21,8 @@ export const authService = {
         return {
             email: user.email,
             person_id: user.person_id,
-            type: user.type
+            type: user.type,
+            tag: user.tag ?? null,
         }
     },
 
@@ -30,7 +31,7 @@ export const authService = {
         if(data.type === "client") throw({});
         
         
-        refreshIfExpired('tokenCashier')
+        refreshIfExpired('tokenWorker')
         refreshIfExpired('tokenCashier')
 
         if(data.type === "worker" && data.token === registerTokens.tokenWorker.value){

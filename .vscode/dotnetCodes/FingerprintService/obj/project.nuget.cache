@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "BSNFjSEG7Cc=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\gamep\\Documents\\GitHub\\trabajo-final-dev3\\.vscode\\dotnetCodes\\FingerprintService\\FingerprintService.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\gamep\\.nuget\\packages\\dpfp\\1.0.1\\dpfp.1.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}

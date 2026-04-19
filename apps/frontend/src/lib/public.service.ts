@@ -24,6 +24,8 @@ export type BookingPayload = {
 export const publicService = {
   getTattoos: () => api.get<Tattoo[]>('/public/tattoos'),
   getWorkers: () => api.get<PublicWorker[]>('/public/workers'),
+  checkEmail: (email: string) =>
+    api.get<{ exists: boolean; blocked?: boolean; reason?: string; first_name?: string; last_name?: string; client_id?: number }>('/public/check-email', { email }),
   getBlocks:  (worker_id: number, date: string) =>
     api.get<AppointmentBlockTime[]>('/public/blocks', { worker_id, date }),
   book: (data: BookingPayload) =>

@@ -36,8 +36,40 @@ export const personModel = {
         })
     },
 
+    update: async (person_id: number, data: {
+        first_name?: string
+        last_name?: string
+        email?: string
+        password?: string
+        specialty?: string
+        medical_notes?: string
+    }) => {
+        const { specialty, medical_notes, ...personFields } = data
+        return await prisma.person.update({
+            where: { person_id },
+            data: {
+                ...personFields,
+                ...(specialty && {
+                    worker: { update: { specialty: specialty as any } }
+                }),
+                ...(medical_notes !== undefined && {
+                    client: { update: { medical_notes } }
+                }),
+            },
+            include: { worker: true, client: true, cashier: true },
+            omit: { password: true },
+        })
+    },
+
+    ban: async (person_id: number, is_deleted: boolean) => {
+        return await prisma.person.update({
+            where: { person_id },
+            data: { is_deleted },
+        })
+    },
+
     restore: async (person_id: number, data: Partial<CreatePerson>) => {
-        const { type, specialty, medical_notes, password, ...personInfo } = data
+        const { type, specialty, medical_notes, password, token: _token, ...personInfo } = data
         return await prisma.person.update({
             where: { person_id },
             data: {
@@ -54,7 +86,7 @@ export const personModel = {
     
     create: async (personData: CreatePerson) => {
         // -- la password viene hasehada del servicio --
-        const { type, specialty, medical_notes, ...personInfo } = personData
+        const { type, specialty, medical_notes, token: _token, ...personInfo } = personData
 
         
         const newPerson = await prisma.person.create({

@@ -11,6 +11,8 @@ import CashierLogin  from '@/pages/CashierLogin'
 import CashierPOS    from '@/pages/CashierPOS'
 import AdminDashboard from '@/pages/AdminDashboard'
 import PublicBooking from '@/pages/PublicBooking'
+import PunchStation  from '@/pages/PunchStation'
+import FingerprintEnroll from '@/pages/FingerprintEnroll'
 import NotFound      from '@/pages/NotFound'
 
 // ── Guards ─────────────────────────────────────────────────────────────────
@@ -32,6 +34,8 @@ export default function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/cashier/login"  element={<CashierLogin />} />
         <Route path="/book"           element={<PublicBooking />} />
+        <Route path="/internal/punch"   element={<PunchStation />} />
+        <Route path="/internal/enroll"  element={<FingerprintEnroll />} />
 
         {/* ── Cashier (protegida) ── */}
         <Route path="/cashier/pos" element={
