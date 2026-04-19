@@ -1,0 +1,1 @@
+ALTER TABLE "img" ALTER COLUMN "source" DROP NOT NULL;

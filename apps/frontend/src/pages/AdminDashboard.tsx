@@ -15,8 +15,9 @@ import PaymentsPage from './Payments'
 import SettingsPage from './Settings'
 import ClientsPage from './Clients'
 import WorkerSchedulePage from './WorkerSchedule'
+import TattooManagement from './TattooManagement'
 import AttendanceHistory from './AttendanceHistory'
-import ActivityLog from './ActivityLog'
+import Maintenance from './Maintenance'
 import OnlineUsers from '@/componentes/OnlineUsers'
 import { useOnlineUsers } from '@/hooks/useOnlineUsers'
 import logo from '@/assets/LogoObsidianWhite.png'
@@ -28,9 +29,10 @@ const NAV: NavItem[] = [
   { icon: Calendar,      label: 'Appointments', id: 'appointments' },
   { icon: Users,         label: 'Clients',      id: 'clients' },
   { icon: UserCircle,    label: 'Staff',        id: 'staff' },
-  { icon: Clock,         label: 'Attendance',   id: 'attendance',  adminOnly: true },
+  { icon: ClipboardList, label: 'Services',     id: 'services' },
+  { icon: Clock,         label: 'Attendance',   id: 'attendance',    adminOnly: true },
   { icon: DollarSign,    label: 'Payments',     id: 'payments' },
-  { icon: Activity,      label: 'Activity',     id: 'activity',    adminOnly: true },
+  { icon: Activity,      label: 'Activity',     id: 'activity',      adminOnly: true },
   { icon: Settings,      label: 'Settings',     id: 'settings' },
 ]
 
@@ -179,10 +181,14 @@ export default function AdminDashboard() {
           <ClientsPage />
         ) : activeTab === 'staff' ? (
           <WorkerSchedulePage />
+        ) : activeTab === 'services' ? (
+          <TattooManagement />
         ) : activeTab === 'attendance' ? (
           user?.tag === 'admin' ? <AttendanceHistory /> : null
         ) : activeTab === 'activity' ? (
           user?.tag === 'admin' ? <ActivityLog /> : null
+        ) : activeTab === 'maintenance' ? (
+          user?.tag === 'admin' ? <Maintenance /> : null
         ) : activeTab === 'settings' ? (
           <SettingsPage />
         ) : (

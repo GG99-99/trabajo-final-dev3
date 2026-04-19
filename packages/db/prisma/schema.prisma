@@ -228,10 +228,12 @@ model StockMovement {
 
 model Img {
   img_id      Int     @id @default(autoincrement())
-  source      Bytes   @db.ByteA
+  source      Bytes?  @db.ByteA          // legacy blob (nullable for S3 images)
   description String?
   create_at   DateTime          @default(now())
   active      Boolean           @default(true)
+  s3_key      String?           // S3 object key
+  s3_url      String?           // public or presigned URL
 
   // Relations
   tattoos Tattoo[]

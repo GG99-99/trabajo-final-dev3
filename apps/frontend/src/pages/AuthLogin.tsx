@@ -46,9 +46,8 @@ export default function Login() {
     const res = await authService.login(data)
     if (!res.ok) { setApiError(res.error.message); return }
     setUser(res.data)
-    if (res.data.type === 'cashier') navigate('/cashier/pos')
-    else if (res.data.type === 'worker') navigate('/admin')
-    else navigate('/')
+    if (res.data.type === 'client') navigate('/')
+    else navigate('/admin') // worker and cashier both go to admin panel
   }
 
   return (
