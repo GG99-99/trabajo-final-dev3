@@ -10,7 +10,7 @@ export interface CreatePayment {
     cashier_id: number;
     amount: number;
     method: "cash" | "credit_card" | "transfer";
-    transaction_ref: string;
+    transaction_ref?: string;
 }
 
 /*****************

@@ -1,4 +1,4 @@
-import { sotckMovementService } from './../stockMovement/stockMovement.service.js';
+import { stockMovementService } from './../stockMovement/stockMovement.service.js';
 import { GetManyBill, GetBill, CreateFullBill, CreateBillTattoo, UpdateBillStatus, BillFinance } from "@final/shared";
 import { billModel } from "./bill.model.js";
 import prisma, {  Prisma } from "@final/db";
@@ -19,18 +19,29 @@ export const billService = {
         const bill = await billModel.get({bill_id: bill_id, relations: true})
         if(!bill) throw({})
 
+
+
         // obtener tattoos 
         const tattoos = await billService.getTattoos(bill_id)
 
+        // obtener stock movements
+        const costs = await Promise.all(
+            bill.details.map((ag) => stockMovementService.getCost(ag.stock_movement_id))
+        );
 
+        // sum
+        const itemsTotal = costs.reduce((acc, cost) => acc + cost, 0);
         const aggregatesTotal = bill.aggregates.reduce((acc, ag) => acc + Number(ag.amount), 0)
         const tattoosTotal = tattoos.reduce((acc, t) => acc + Number(t.price), 0)
+
+        // minus
         const discountTotal = bill.discounts.reduce((acc, d) => acc + Number(d.amount), 0)
         const paymentsTotal = bill.payments
             .filter((p) => !p.is_refunded)
             .reduce((acc, p) => acc + Number(p.amount), 0);
 
-        const total = aggregatesTotal + tattoosTotal 
+        
+        const total = aggregatesTotal + tattoosTotal + itemsTotal
         const rawDebt = total - discountTotal - paymentsTotal
         const debt = Math.max(0, rawDebt)
         const overpaid = rawDebt < 0 ? Math.abs(rawDebt) : 0
@@ -73,18 +84,18 @@ export const billService = {
             }, tx)
            
             
-            
 
             for(const item of data.items){
                 /*****************************************************
                 |   CREAR STOCK MOVEMENT DE LOS ITEMS  DE LA FACTURA  |
                  *****************************************************/
-                const stockMovement = await sotckMovementService.createForProductVariant({
+                const stockMovement = await stockMovementService.createForProductVariant({
                     product_variant_id: item.product_variant_id,
                     reason: `factura ${bill.bill_id}`,
                     type: "exit",
                     quantity: item.quantity,
                 }, tx)
+
 
                 /**********************
                 |   CREAR BILL DETAIL  |
@@ -94,6 +105,7 @@ export const billService = {
                     stock_movement_id: stockMovement.stock_movement_id
                 }, tx)
                 
+
 
             }
 
@@ -110,6 +122,8 @@ export const billService = {
                 }, tx)       
             }
 
+
+
             /**************************
             |   CREAR BILL AGGREGATES  |
              **************************/
@@ -122,6 +136,7 @@ export const billService = {
             }
 
 
+
             /************************
             |   CREAR BILL DISCOUNT  |
              ************************/
@@ -132,6 +147,7 @@ export const billService = {
                     reason: dis.reason
                 }, tx)
             }
+
 
             return bill
         })

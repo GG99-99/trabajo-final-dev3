@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { GetStockMovementFilters } from "@final/shared";
-import { sotckMovementService } from "./stockMovement.service.js";
+import { stockMovementService } from "./stockMovement.service.js";
 import { parseBoolean, parseDate, parseNumber, parseString } from "../common/controller.utils.js";
 
 export const stockMovementController = {
@@ -12,7 +12,7 @@ export const stockMovementController = {
       type: parseString(req.query.type) as any,
       create_at: parseDate(req.query.create_at),
     };
-    const stockMovement = await sotckMovementService.get(filters);
+    const stockMovement = await stockMovementService.get(filters);
     return res.json({ ok: true, data: stockMovement, error: null });
   },
 };

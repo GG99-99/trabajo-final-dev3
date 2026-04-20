@@ -1,4 +1,4 @@
-import { sotckMovementService } from "./stockMovement.service.js";
+import { stockMovementService } from "./stockMovement.service.js";
 import { parseDate, parseNumber, parseString } from "../common/controller.utils.js";
 export const stockMovementController = {
     get: async (req, res) => {
@@ -9,7 +9,7 @@ export const stockMovementController = {
             type: parseString(req.query.type),
             create_at: parseDate(req.query.create_at),
         };
-        const stockMovement = await sotckMovementService.get(filters);
+        const stockMovement = await stockMovementService.get(filters);
         return res.json({ ok: true, data: stockMovement, error: null });
     },
 };

@@ -18,6 +18,18 @@ export const clientModel = {
         })
     },
 
+    getByEmail: async (email: string): Promise<ClientWithRelations | null> => {
+        return await prisma.client.findFirst({
+            where: {
+                person: {
+                    email: email,
+                    is_deleted: false,
+                }
+            },
+            include: { person: true }
+        })
+    },
+
 
     /***********
     |   CREATE  |
