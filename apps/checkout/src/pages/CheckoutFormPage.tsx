@@ -27,10 +27,12 @@ function CheckoutFormPage() {
   const [cashierId] = useState<number>(1)
   const [appointmentId, setAppointmentId] = useState<number | null>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [extra, setExtra] = useState<Extra>({
     aggregates: [],
     discounts: [],
   })
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -290,7 +292,7 @@ function CheckoutFormPage() {
         worker_id: workerId,
         cashier_id: cashierId,
         appointment_id: appointmentId || undefined,
-        create_at: new Date(),
+        create_at: new Date(date) || new Date(),
         tatto_ids,
         items,
         extra: normalizedExtra,
@@ -318,6 +320,11 @@ function CheckoutFormPage() {
     <div className="checkout-form-page">
       <header className="checkout-form-header">
         <h2>Crear Factura</h2>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
       </header>
 
       {error && <div className="checkout-error-banner">{error}</div>}

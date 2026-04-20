@@ -1,8 +1,9 @@
 import CheckoutFormPage from './pages/CheckoutFormPage.js'
 import BillPaymentPage from './pages/BillPaymentPage.js'
+import CashRegisterClosePage from './pages/CashRegisterClosePage.js'
 import { useState } from 'react'
 
-type ViewMode = 'billing' | 'payments'
+type ViewMode = 'billing' | 'payments' | 'cashclose'
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('billing')
@@ -27,9 +28,17 @@ function App() {
           >
             Pagar factura
           </button>
+          <button
+            className={viewMode === 'cashclose' ? 'btn-secondary' : ''}
+            onClick={() => setViewMode('cashclose')}
+          >
+            Cierre de Caja
+          </button>
         </nav>
       </header>
-      {viewMode === 'billing' ? <CheckoutFormPage /> : <BillPaymentPage />}
+      {viewMode === 'billing' && <CheckoutFormPage />}
+      {viewMode === 'payments' && <BillPaymentPage />}
+      {viewMode === 'cashclose' && <CashRegisterClosePage />}
     </main>
   )
 }

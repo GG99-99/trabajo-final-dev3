@@ -7,5 +7,6 @@ onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'
   - bcrypt
+  - core-js
   - esbuild
   - prisma

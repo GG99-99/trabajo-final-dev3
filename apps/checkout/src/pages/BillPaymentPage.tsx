@@ -7,6 +7,7 @@ import type {
   PaymentMethod,
 } from '@final/shared'
 import { createPayment, getTotal, listBills, listPayments } from '../services'
+import { emailService } from '../services/emailService'
 
 type BillCard = {
   bill: BillWithRelations
@@ -134,6 +135,15 @@ function BillPaymentPage() {
       amount: Number(paymentData.amount),
       method: paymentData.method,
       transaction_ref: paymentData.transaction_ref.trim(),
+    }
+
+    if(selectedBill.bill.client.person.email) {
+      emailService.sendContactForm({
+        user_name: selectedBill.bill.client.person.first_name + ' ' + selectedBill.bill.client.person.last_name,
+        user_email: selectedBill.bill.client.person.email,
+        subject: 'Pago de factura',
+        message: `Pago de factura registrado, monto: ${paymentData.amount}`,
+      })
     }
 
     setSubmittingPayment(true)
@@ -289,7 +299,7 @@ function BillPaymentPage() {
                         <p>Monto: ${Number(payment.amount).toFixed(2)}</p>
                         <p>Metodo: {PAYMENT_METHOD_LABEL[payment.method]}</p>
                         <p>Referencia: {payment.transaction_ref}</p>
-                        <p>Fecha: {new Date(payment.date).toLocaleString()}</p>
+                        <p>Fecha: {new Date(payment.create_at).toLocaleString()}</p>
                       </article>
                     ))}
                 </div>
