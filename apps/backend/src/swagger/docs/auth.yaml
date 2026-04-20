@@ -1,0 +1,90 @@
+paths:
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginData'
+      responses:
+        '200':
+          description: Login exitoso. El token JWT se guarda en cookie httpOnly.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:    { type: integer }
+                          name:  { type: string }
+                          email: { type: string }
+                          tag:   { type: string }
+        '401':
+          description: Credenciales inválidas
+
+  /api/auth/register:
+    get:
+      tags: [Auth]
+      summary: Obtener token de registro (expiry)
+      security: []
+      responses:
+        '200':
+          description: Fecha de expiración del token de registro
+    post:
+      tags: [Auth]
+      summary: Registrar nuevo usuario
+      security: []
+      parameters:
+        - in: header
+          name: x-registration-token
+          required: true
+          schema:
+            type: string
+          description: Token de registro obtenido por el administrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePerson'
+      responses:
+        '200':
+          description: Usuario registrado exitosamente
+        '401':
+          description: Token de registro inválido o expirado
+
+  /api/auth/token:
+    get:
+      tags: [Auth]
+      summary: Validar token JWT actual
+      responses:
+        '200':
+          description: Token válido, devuelve el payload decodificado
+        '401':
+          description: No autenticado
+
+  /api/auth/admin/tokens:
+    get:
+      tags: [Auth]
+      summary: Obtener tokens de registro (admin)
+      description: Requiere tag=admin. Devuelve los tokens actuales para worker y cashier.
+      responses:
+        '200':
+          description: Tokens de worker y cashier
+
+  /api/auth/admin/tokens/refresh:
+    post:
+      tags: [Auth]
+      summary: Regenerar tokens de registro (admin)
+      description: Fuerza la regeneración de ambos tokens aunque no hayan expirado.
+      responses:
+        '200':
+          description: Nuevos tokens generados

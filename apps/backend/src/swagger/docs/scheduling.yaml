@@ -1,0 +1,135 @@
+paths:
+  /api/appointments:
+    get:
+      tags: [Appointments]
+      summary: Listar citas
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de citas
+    post:
+      tags: [Appointments]
+      summary: Crear cita
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Appointment'
+      responses:
+        '200':
+          description: Cita creada
+
+  /api/appointments/blocks:
+    get:
+      tags: [Appointments]
+      summary: Obtener bloques de tiempo disponibles
+      parameters:
+        - in: query
+          name: workerId
+          schema: { type: integer }
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Bloques disponibles
+
+  /api/appointments/status:
+    put:
+      tags: [Appointments]
+      summary: Actualizar estado de una cita
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, status]
+              properties:
+                id:     { type: integer }
+                status: { type: string, enum: [pending, confirmed, cancelled, done] }
+      responses:
+        '200':
+          description: Estado actualizado
+
+  /api/schedules:
+    get:
+      tags: [Schedules]
+      summary: Listar horarios
+      responses:
+        '200':
+          description: Lista de horarios
+    post:
+      tags: [Schedules]
+      summary: Crear horario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+      responses:
+        '200':
+          description: Horario creado
+
+  /api/seats:
+    get:
+      tags: [Seats]
+      summary: Listar puestos
+      responses:
+        '200':
+          description: Lista de puestos
+    post:
+      tags: [Seats]
+      summary: Crear puesto
+      responses:
+        '200':
+          description: Puesto creado
+
+  /api/attendances:
+    get:
+      tags: [Attendances]
+      summary: Listar asistencias
+      responses:
+        '200':
+          description: Lista de asistencias
+
+  /api/assists:
+    get:
+      tags: [Assists]
+      summary: Listar registros de asistencia
+      responses:
+        '200':
+          description: Lista de asistencia
+
+  /api/no-assists:
+    get:
+      tags: [No-Assists]
+      summary: Listar ausencias
+      responses:
+        '200':
+          description: Lista de ausencias
+
+  /api/punch:
+    post:
+      tags: [Punch]
+      summary: Registrar fichaje (entrada/salida)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workerId: { type: integer }
+                type:     { type: string, enum: [in, out] }
+      responses:
+        '200':
+          description: Fichaje registrado

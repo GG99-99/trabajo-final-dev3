@@ -1,0 +1,124 @@
+paths:
+  /api/products:
+    get:
+      tags: [Products]
+      summary: Listar productos
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: categoryId
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de productos
+    post:
+      tags: [Products]
+      summary: Crear producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Producto creado
+
+  /api/products/detail:
+    get:
+      tags: [Products]
+      summary: Detalle de un producto
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Detalle del producto
+
+  /api/product-variants:
+    get:
+      tags: [Products]
+      summary: Listar variantes de producto
+      responses:
+        '200':
+          description: Lista de variantes
+    post:
+      tags: [Products]
+      summary: Crear variante de producto
+      responses:
+        '200':
+          description: Variante creada
+
+  /api/categories:
+    get:
+      tags: [Categories]
+      summary: Listar categorías
+      responses:
+        '200':
+          description: Lista de categorías
+    post:
+      tags: [Categories]
+      summary: Crear categoría
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      responses:
+        '200':
+          description: Categoría creada
+
+  /api/inventory:
+    get:
+      tags: [Inventory]
+      summary: Listar inventario
+      responses:
+        '200':
+          description: Lista del inventario
+
+  /api/stock-movements:
+    get:
+      tags: [Stock Movements]
+      summary: Listar movimientos de stock
+      responses:
+        '200':
+          description: Lista de movimientos
+    post:
+      tags: [Stock Movements]
+      summary: Registrar movimiento de stock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId: { type: integer }
+                quantity:  { type: integer }
+                type:      { type: string, enum: [in, out, adjustment] }
+                reason:    { type: string }
+      responses:
+        '200':
+          description: Movimiento registrado
+
+  /api/providers:
+    get:
+      tags: [Providers]
+      summary: Listar proveedores
+      responses:
+        '200':
+          description: Lista de proveedores
+    post:
+      tags: [Providers]
+      summary: Crear proveedor
+      responses:
+        '200':
+          description: Proveedor creado
