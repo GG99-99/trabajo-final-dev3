@@ -12,13 +12,45 @@ function buildQuery(params?: Record<string, unknown>): string {
   return s ? `?${s}` : ''
 }
 
+/**
+ * Detecta si un error es de red (core caído, sin conexión, timeout).
+ * En ese caso NO lanzamos — devolvemos un ApiResponse con ok: false
+ * para que el caller pueda manejarlo sin try/catch obligatorio.
+ */
+function networkErrorResponse<T>(err: unknown): ApiResponse<T> {
+  const isNetwork =
+    err instanceof TypeError ||
+    (err instanceof Error && (
+      err.message.includes('fetch') ||
+      err.message.includes('network') ||
+      err.message.includes('ECONNREFUSED')
+    ))
+
+  return {
+    ok: false,
+    data: null as T,
+    error: {
+      name: isNetwork ? 'NetworkError' : 'UnknownError',
+      statusCode: 0,
+      message: isNetwork
+        ? 'No se puede conectar con el servidor. Verifica tu conexión.'
+        : String(err),
+    },
+  } as ApiResponse<T>
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
-  })
-  return res.json() as Promise<ApiResponse<T>>
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      ...options,
+    })
+    return res.json() as Promise<ApiResponse<T>>
+  } catch (err) {
+    // Error de red — nunca lanzamos, siempre devolvemos ApiResponse
+    return networkErrorResponse<T>(err)
+  }
 }
 
 export const api = {

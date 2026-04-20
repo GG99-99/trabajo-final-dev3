@@ -1,4 +1,5 @@
 import { api } from './api'
+import { enqueue, isNetworkError } from './punch.offline'
 
 export type PunchRecord = {
   worker_id: number
@@ -21,6 +22,16 @@ export type TodayStatus = {
   assist: PunchRecord | null
 }
 
+/**
+ * Resultado extendido para clockIn / clockOut.
+ * Cuando el core no está disponible, `queued: true` indica que la
+ * transacción fue guardada offline para sincronizarse más tarde.
+ */
+export type PunchResult =
+  | { ok: true;  queued: false; data: PunchRecord; error: null }
+  | { ok: false; queued: false; data: null; error: { message: string } }
+  | { ok: true;  queued: true;  data: null; error: null; recorded_at: string }
+
 export const punchService = {
   /** GET /api/punch/status?worker_id= */
   getTodayStatus: (worker_id: number) =>
@@ -30,13 +41,41 @@ export const punchService = {
   getHistory: (filters?: { worker_id?: number; date?: string }) =>
     api.get<PunchRecord[]>('/punch/history', filters as Record<string, unknown>),
 
-  /** POST /api/punch/in */
-  clockIn: (worker_id: number) =>
-    api.post<PunchRecord>('/punch/in', { worker_id }),
+  /**
+   * POST /api/punch/in
+   * Si el core no responde, guarda la transacción en la cola offline.
+   */
+  clockIn: async (worker_id: number): Promise<PunchResult> => {
+    try {
+      const res = await api.post<PunchRecord>('/punch/in', { worker_id })
+      if (res.ok) return { ok: true, queued: false, data: res.data, error: null }
+      return { ok: false, queued: false, data: null, error: { message: (res as any).error?.message ?? 'Error registrando entrada.' } }
+    } catch (err) {
+      if (isNetworkError(err)) {
+        const tx = enqueue(worker_id, 'in')
+        return { ok: true, queued: true, data: null, error: null, recorded_at: tx.recorded_at }
+      }
+      throw err
+    }
+  },
 
-  /** POST /api/punch/out */
-  clockOut: (worker_id: number) =>
-    api.post<PunchRecord>('/punch/out', { worker_id }),
+  /**
+   * POST /api/punch/out
+   * Si el core no responde, guarda la transacción en la cola offline.
+   */
+  clockOut: async (worker_id: number): Promise<PunchResult> => {
+    try {
+      const res = await api.post<PunchRecord>('/punch/out', { worker_id })
+      if (res.ok) return { ok: true, queued: false, data: res.data, error: null }
+      return { ok: false, queued: false, data: null, error: { message: (res as any).error?.message ?? 'Error registrando salida.' } }
+    } catch (err) {
+      if (isNetworkError(err)) {
+        const tx = enqueue(worker_id, 'out')
+        return { ok: true, queued: true, data: null, error: null, recorded_at: tx.recorded_at }
+      }
+      throw err
+    }
+  },
 }
 
 export type Fingerprint = {
@@ -72,12 +111,6 @@ export const fingerprintService = {
   delete: (worker_id: number) =>
     api.delete<boolean>(`/fingerprints/${worker_id}`),
 
-  /**
-   * Enrollment flow — 4 steps:
-   * 1. Call /enroll/step 4 times (each blocks until user places finger)
-   * 2. Call /enroll/finish with the 4 feature sets → returns template_b64
-   * 3. Store template_b64 in the database
-   */
   identify: async (templates: { worker_id: number; template: string }[]): Promise<{ ok: boolean; worker_id: number | null; score: number; error?: string }> => {
     try {
       const res = await fetch('http://localhost:5100/identify', {

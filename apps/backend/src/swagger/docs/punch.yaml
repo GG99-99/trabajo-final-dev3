@@ -1,0 +1,145 @@
+paths:
+  /api/punch/in:
+    post:
+      tags: [Punch]
+      summary: Registrar entrada (clock in)
+      description: Registra la entrada del trabajador para el día de hoy. Si no existe una asistencia para hoy, se crea automáticamente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [worker_id]
+              properties:
+                worker_id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Entrada registrada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:    { type: boolean, example: true }
+                  data:  { type: object }
+                  error: { nullable: true, example: null }
+        '400':
+          description: worker_id inválido o faltante
+        '404':
+          description: Trabajador no encontrado
+        '409':
+          description: El trabajador ya registró su entrada hoy
+
+  /api/punch/out:
+    post:
+      tags: [Punch]
+      summary: Registrar salida (clock out)
+      description: Registra la salida del trabajador para el día de hoy. El trabajador debe haber registrado su entrada previamente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [worker_id]
+              properties:
+                worker_id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Salida registrada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:    { type: boolean, example: true }
+                  data:  { type: object }
+                  error: { nullable: true, example: null }
+        '400':
+          description: worker_id inválido o faltante
+        '404':
+          description: Trabajador no encontrado
+        '409':
+          description: El trabajador no ha registrado entrada hoy, o ya registró su salida
+
+  /api/punch/status:
+    get:
+      tags: [Punch]
+      summary: Estado de fichaje del día actual
+      description: Devuelve si el trabajador tiene entrada y/o salida registrada para hoy.
+      parameters:
+        - in: query
+          name: worker_id
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Estado del fichaje actual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      clocked_in:
+                        type: boolean
+                        example: true
+                      clocked_out:
+                        type: boolean
+                        example: false
+                      assist:
+                        type: object
+                        nullable: true
+                  error:
+                    nullable: true
+                    example: null
+
+  /api/punch/history:
+    get:
+      tags: [Punch]
+      summary: Historial de fichajes
+      description: Devuelve el historial de entradas/salidas. Se puede filtrar por trabajador y/o por fecha (formato YYYY-MM-DD).
+      parameters:
+        - in: query
+          name: worker_id
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: date
+          required: false
+          schema:
+            type: string
+            format: date
+            example: '2025-04-20'
+      responses:
+        '200':
+          description: Historial de fichajes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  error:
+                    nullable: true
+                    example: null
