@@ -357,7 +357,7 @@ model Payment {
   create_at       DateTime      @default(now())
   amount          Decimal       @db.Decimal(10, 2)
   method          PaymentMethod
-  transaction_ref String
+  transaction_ref String?
   is_refunded     Boolean       @default(false)
 
   // Relations

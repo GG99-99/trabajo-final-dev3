@@ -1,7 +1,7 @@
 import { stockMovementModel } from "./stockMovement.model.js";
 import { inventoryModel } from "../inventory/inventory.model.js";
 import { inventoryService } from "../inventory/inventory.service.js";
-export const sotckMovementService = {
+export const stockMovementService = {
     get: async (filters) => {
         return await stockMovementModel.get(filters);
     },
@@ -35,7 +35,7 @@ export const sotckMovementService = {
         });
         if (!item)
             throw {};
-        return await sotckMovementService.create({
+        return await stockMovementService.create({
             inventory_item_id: item.inventory_item_id,
             reason: data.reason,
             quantity: data.quantity,

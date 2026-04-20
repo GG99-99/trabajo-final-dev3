@@ -1,6 +1,6 @@
 import { GetStockMovementFilters, CreateStockMovement, CreateStockMovementFromProduct } from "@final/shared";
 import { Prisma } from "@final/db";
-export declare const sotckMovementService: {
+export declare const stockMovementService: {
     get: (filters: GetStockMovementFilters) => Promise<{
         type: import("@final/db").$Enums.StockMovementType;
         create_at: Date;

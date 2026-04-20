@@ -2,12 +2,17 @@ import { GetStockMovementFilters, CreateStockMovement, ApiErr, CreateStockMoveme
 import { stockMovementModel } from "./stockMovement.model.js";
 import { inventoryModel } from "../inventory/inventory.model.js";
 import { inventoryService } from "../inventory/inventory.service.js";
-import prisma, { Prisma } from "@final/db";
+import  { Prisma } from "@final/db";
 
 
-export const sotckMovementService = {
+export const stockMovementService = {
     get: async (filters: GetStockMovementFilters) => {
         return await stockMovementModel.get(filters)
+    },
+
+    getCost: async(stock_movement_id: number) => {
+        const st = await stockMovementModel.get({stock_movement_id})
+        return Number(st?.quantity) * Number(st?.inventoryItem.productVariant.price)
     },
 
 
@@ -48,7 +53,7 @@ export const sotckMovementService = {
         })
         if(!item) throw({} as ApiErr)
 
-        return await sotckMovementService.create({
+        return await stockMovementService.create({
             inventory_item_id: item.inventory_item_id,
             reason: data.reason,
             quantity: data.quantity,

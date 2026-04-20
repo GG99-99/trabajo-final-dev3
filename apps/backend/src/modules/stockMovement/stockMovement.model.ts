@@ -18,6 +18,14 @@ export const stockMovementModel = {
                 ...(filters.type && {type: filters.type}),
 
 
+            },
+            include: {
+                inventoryItem: {
+                    include: {
+                        productVariant: true
+                    }
+
+                }
             }
         })
     },

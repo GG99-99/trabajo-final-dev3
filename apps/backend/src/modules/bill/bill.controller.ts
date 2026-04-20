@@ -45,6 +45,7 @@ export const billController = {
 
   create: async (req: Request, res: Response) => {
     const payload: CreateFullBill = req.body;
+    console.log(payload)
     const bill = await billService.create(payload);
     return res.json({ ok: true, data: bill, error: null });
   },

@@ -1,4 +1,4 @@
-import { sotckMovementService } from './../stockMovement/stockMovement.service.js';
+import { stockMovementService } from './../stockMovement/stockMovement.service.js';
 import { billModel } from "./bill.model.js";
 import prisma from "@final/db";
 export const billService = {
@@ -59,7 +59,7 @@ export const billService = {
                 /*****************************************************
                 |   CREAR STOCK MOVEMENT DE LOS ITEMS  DE LA FACTURA  |
                  *****************************************************/
-                const stockMovement = await sotckMovementService.createForProductVariant({
+                const stockMovement = await stockMovementService.createForProductVariant({
                     product_variant_id: item.product_variant_id,
                     reason: `factura ${bill.bill_id}`,
                     type: "exit",

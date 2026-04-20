@@ -1,6 +1,6 @@
 import prisma from "@final/db";
 import { inventoryModel } from "./inventory.model.js";
-import { sotckMovementService } from "../stockMovement/stockMovement.service.js";
+import { stockMovementService } from "../stockMovement/stockMovement.service.js";
 export const inventoryService = {
     /*********
     |   READ  |
@@ -34,7 +34,7 @@ export const inventoryService = {
     create: async (data) => {
         return await prisma.$transaction(async (tx) => {
             const inventoryItem = await inventoryModel.create(data, tx);
-            await sotckMovementService.create({
+            await stockMovementService.create({
                 inventory_item_id: inventoryItem.inventory_item_id,
                 quantity: data.current_quantity,
                 reason: "Entrada",

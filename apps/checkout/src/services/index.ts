@@ -1,0 +1,26 @@
+import * as billService from './billService'
+import * as paymentService from './paymentService'
+import * as workerService from './workerService'
+import * as appointmentService from './appointmentService'
+import * as clientService from './clientService'
+import * as productVariantService from './productVariantService'
+import * as tattooService from './tattooService'
+
+export const checkoutService = {
+  ...billService,
+  ...paymentService,
+  ...workerService,
+  ...appointmentService,
+  ...clientService,
+  ...productVariantService,
+  ...tattooService,
+}
+
+// Re-exportar todas las funciones directamente
+export * from './billService'
+export * from './paymentService'
+export * from './workerService'
+export * from './appointmentService'
+export * from './clientService'
+export * from './productVariantService'
+export * from './tattooService'

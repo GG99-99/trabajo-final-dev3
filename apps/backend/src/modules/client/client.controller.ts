@@ -14,6 +14,15 @@ export const clientController = {
     return res.json({ ok: true, data: client, error: null });
   },
 
+  getByEmail: async (req: Request, res: Response) => {
+    const email = String(req.query.email || '');
+    if (!email) {
+      return res.status(400).json({ ok: false, data: null, error: { name: 'BadRequest', statusCode: 400, message: 'email required' } });
+    }
+    const client = await clientService.getByEmail(email);
+    return res.json({ ok: true, data: client, error: null });
+  },
+
   create: async (req: Request, res: Response) => {
     const client = await clientService.create(req.body);
     return res.json({ ok: true, data: client, error: null });
