@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { CreateFullBill, GetBill, GetManyBill, UpdateBillStatus } from "@final/shared";
 import { billService } from "./bill.service.js";
-import { parseBoolean, parseNumber, parseString } from "../common/controller.utils.js";
+import { parseBoolean, parseNumber, parseString, parseDate } from "../common/controller.utils.js";
 import { BillStatus } from "@final/db";
 
 export const billController = {
@@ -11,6 +11,7 @@ export const billController = {
       cashier_id: parseNumber(req.query.cashier_id),
       status: parseString(req.query.status) as BillStatus,
       relations: parseBoolean(req.query.relations),
+      date: parseDate(req.query.date),
     };
     const bills = await billService.getMany(filters);
     return res.json({ ok: true, data: bills, error: null });

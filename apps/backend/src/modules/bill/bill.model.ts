@@ -26,6 +26,8 @@ export const billModel = {
         })
     },
     getMany: async (filters: GetManyBill): Promise<BillWithRelations[]> => {
+
+        
         return await prisma.bill.findMany({
             where: {
                 ...(filters.date && {create_at: {

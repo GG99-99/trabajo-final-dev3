@@ -25,7 +25,7 @@ app.MapPost("/enroll/step", async () =>
 {
     try
     {
-        var fmdB64 = await FingerprintCapture.CaptureFmdAsync();
+        var fmdB64 = await FingerprintCapture.CaptueFmdAsync();
         return Results.Json(new { ok = true, fmd_b64 = fmdB64 });
     }
     catch (Exception ex)

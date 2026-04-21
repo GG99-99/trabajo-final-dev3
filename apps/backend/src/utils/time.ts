@@ -15,13 +15,13 @@ export function diffTime(start: string, end: string) {
 
 
 
-export const toStartOfDay = (date: Date | string, offsetHours = -4) => {
+export const toStartOfDay = (date: Date | string, offsetHours = 0) => {
     const d = new Date(date);
     d.setUTCHours(-offsetHours, 0, 0, 0);
     return d;
 };
 
-export const toEndOfDay = (date: Date | string, offsetHours = -4) => {
+export const toEndOfDay = (date: Date | string, offsetHours = 0) => {
     const d = new Date(date);
     d.setUTCHours(23 + (-offsetHours), 59, 59, 999);
     return d;
