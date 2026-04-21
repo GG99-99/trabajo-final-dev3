@@ -1,0 +1,84 @@
+paths:
+  /api/workers:
+    get:
+      tags: [Workers]
+      summary: Listar trabajadores
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de trabajadores
+
+  /api/workers/detail:
+    get:
+      tags: [Workers]
+      summary: Obtener detalle de un trabajador
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Detalle del trabajador
+        '404':
+          description: Trabajador no encontrado
+
+paths:
+  /api/clients:
+    get:
+      tags: [Clients]
+      summary: Listar clientes
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de clientes
+    post:
+      tags: [Clients]
+      summary: Crear cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: Cliente creado
+
+  /api/clients/detail:
+    get:
+      tags: [Clients]
+      summary: Obtener detalle de un cliente
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Detalle del cliente
+
+  /api/clients/{id}:
+    delete:
+      tags: [Clients]
+      summary: Eliminar cliente (soft delete)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Cliente eliminado

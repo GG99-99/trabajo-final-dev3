@@ -1,0 +1,142 @@
+paths:
+  /api/bills:
+    get:
+      tags: [Bills]
+      summary: Listar facturas
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de facturas
+    post:
+      tags: [Bills]
+      summary: Crear factura
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bill'
+      responses:
+        '200':
+          description: Factura creada
+
+  /api/payments:
+    get:
+      tags: [Payments]
+      summary: Listar pagos
+      responses:
+        '200':
+          description: Lista de pagos
+    post:
+      tags: [Payments]
+      summary: Registrar pago
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+      responses:
+        '200':
+          description: Pago registrado
+
+  /api/cashiers:
+    get:
+      tags: [Cashiers]
+      summary: Listar cajeros
+      responses:
+        '200':
+          description: Lista de cajeros
+
+  /api/tattoos:
+    get:
+      tags: [Tattoos]
+      summary: Listar tatuajes
+      responses:
+        '200':
+          description: Lista de tatuajes
+    post:
+      tags: [Tattoos]
+      summary: Registrar tatuaje
+      responses:
+        '200':
+          description: Tatuaje registrado
+
+  /api/persons:
+    get:
+      tags: [Persons]
+      summary: Listar personas
+      responses:
+        '200':
+          description: Lista de personas
+
+  /api/imgs:
+    post:
+      tags: [Images]
+      summary: Subir imagen
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: URL de la imagen subida
+
+  /api/fingerprints:
+    get:
+      tags: [Fingerprints]
+      summary: Listar huellas registradas
+      responses:
+        '200':
+          description: Lista de huellas
+    post:
+      tags: [Fingerprints]
+      summary: Registrar huella dactilar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workerId:    { type: integer }
+                fingerprintData: { type: string }
+      responses:
+        '200':
+          description: Huella registrada
+
+  /api/audit:
+    get:
+      tags: [Audit]
+      summary: Listar registros de auditoría
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Registros de auditoría
+
+  /api/public:
+    get:
+      tags: [Public]
+      summary: Endpoint público de información general
+      security: []
+      responses:
+        '200':
+          description: Información pública
