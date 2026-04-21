@@ -4,8 +4,9 @@ import { GetManyStockMovementFilters, GetStockMovementFilters, CreateStockMoveme
 
 
 export const stockMovementModel = {
-    get: async (filters: GetStockMovementFilters) =>{
-        return await prisma.stockMovement.findFirst({
+    get: async (filters: GetStockMovementFilters, tx?: Prisma.TransactionClient) =>{
+        const client = tx ?? prisma
+        return await client.stockMovement.findFirst({
             where: {
                 ...(filters.stock_movement_id && {stock_movement_id: filters.stock_movement_id}),
                 ...(filters.inventory_item_id && {inventory_item_id: filters.inventory_item_id}),

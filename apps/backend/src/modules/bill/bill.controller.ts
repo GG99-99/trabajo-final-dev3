@@ -46,9 +46,16 @@ export const billController = {
 
   create: async (req: Request, res: Response) => {
     const payload: CreateFullBill = req.body;
-    console.log(payload)
-    const bill = await billService.create(payload);
-    return res.json({ ok: true, data: bill, error: null });
+    console.log(payload);
+    try {
+      const bill = await billService.create(payload);
+      return res.json({ ok: true, data: bill, error: null });
+    } catch (err: any) {
+      console.error('[bill.create ERROR]', err);
+      const statusCode = err?.statusCode ?? 500;
+      const message    = err?.message    ?? 'Error interno al crear la factura';
+      return res.status(statusCode).json({ ok: false, data: null, error: message });
+    }
   },
 
   updateState: async (req: Request, res: Response) => {

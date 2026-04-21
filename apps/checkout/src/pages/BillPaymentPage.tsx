@@ -134,10 +134,10 @@ function BillPaymentPage() {
       cashier_id: paymentData.cashier_id,
       amount: Number(paymentData.amount),
       method: paymentData.method,
-      transaction_ref: paymentData.transaction_ref.trim(),
+      transaction_ref: paymentData.transaction_ref?.trim(),
     }
 
-    if(selectedBill.bill.client.person.email) {
+    if(selectedBill.bill?.client?.person.email) {
       emailService.sendContactForm({
         user_name: selectedBill.bill.client.person.first_name + ' ' + selectedBill.bill.client.person.last_name,
         user_email: selectedBill.bill.client.person.email,

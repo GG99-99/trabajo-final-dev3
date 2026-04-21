@@ -6,12 +6,12 @@ import  { Prisma } from "@final/db";
 
 
 export const stockMovementService = {
-    get: async (filters: GetStockMovementFilters) => {
-        return await stockMovementModel.get(filters)
+    get: async (filters: GetStockMovementFilters, tx?: Prisma.TransactionClient) => {
+        return await stockMovementModel.get(filters, tx)
     },
 
-    getCost: async(stock_movement_id: number) => {
-        const st = await stockMovementModel.get({stock_movement_id})
+    getCost: async (stock_movement_id: number, tx?: Prisma.TransactionClient) => {
+        const st = await stockMovementModel.get({stock_movement_id}, tx)
         return Number(st?.quantity) * Number(st?.inventoryItem.productVariant.price)
     },
 
@@ -23,10 +23,9 @@ export const stockMovementService = {
         // validar si puedo reducir
         if(data.type !== "entry"){
             const item = await inventoryModel.get({  
-                // es por id la busqueda pero le paso un gte para validar indirectamente que tiene la cantidad necesaria
                 inventory_item_id: data.inventory_item_id,
                 gte: data.quantity
-            })
+            }, tx)
 
             if(!item) throw({name: "InsufficientQuantity", statusCode: 400, message: "no hay cantidad suficiente para realizar extraccion del inventario"} as ApiErr)
         }
@@ -42,16 +41,25 @@ export const stockMovementService = {
         }, tx)
 
         return stockMovement
-
-
     },
 
     createForProductVariant: async (data: CreateStockMovementFromProduct, tx: Prisma.TransactionClient) => {
-        // obtener inventory_item
+        // obtener inventory_item no expirado con stock suficiente (usando tx para evitar deadlock)
         const item = await inventoryService.getNotExpired({
             product_variant_id: data.product_variant_id,
-        })
-        if(!item) throw({} as ApiErr)
+        }, tx)
+        if (!item) throw({
+            name: 'InsufficientQuantity',
+            statusCode: 400,
+            message: `Sin stock disponible para product_variant_id=${data.product_variant_id}. Verifique el inventario.`
+        } as ApiErr)
+
+        // validar que la cantidad disponible alcanza
+        if (Number(item.current_quantity) < data.quantity) throw({
+            name: 'InsufficientQuantity',
+            statusCode: 400,
+            message: `Stock insuficiente para product_variant_id=${data.product_variant_id}. Disponible: ${item.current_quantity}, solicitado: ${data.quantity}.`
+        } as ApiErr)
 
         return await stockMovementService.create({
             inventory_item_id: item.inventory_item_id,

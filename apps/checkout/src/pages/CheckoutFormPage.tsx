@@ -301,7 +301,7 @@ function CheckoutFormPage() {
       const result = await createBill(payload)
 
       if (!result.ok) {
-        throw new Error(result.error?.message ?? 'Error al crear factura')
+        throw new Error(typeof result.error === 'string' ? result.error : result.error?.message ?? 'Error al crear factura')
       }
 
       setSuccess('Factura creada exitosamente')
@@ -309,8 +309,11 @@ function CheckoutFormPage() {
       setExtra({ aggregates: [], discounts: [] })
       setClientId(null)
       setSaleType('direct')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
+    } catch (err: any) {
+      // Capturar error de Axios (respuesta HTTP con status 4xx/5xx)
+      const axiosMsg = err?.response?.data?.error
+      const fallback = err instanceof Error ? err.message : 'Error desconocido'
+      setError(typeof axiosMsg === 'string' ? axiosMsg : fallback)
     } finally {
       setLoading(false)
     }
@@ -327,7 +330,12 @@ function CheckoutFormPage() {
         />
       </header>
 
-      {error && <div className="checkout-error-banner">{error}</div>}
+      {error && (
+        <div className="checkout-error-banner" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+          <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
       {success && <div className="checkout-success-banner">{success}</div>}
 
       <div className="checkout-form-grid">
@@ -613,6 +621,14 @@ function CheckoutFormPage() {
           <strong>${total.toFixed(2)}</strong>
         </div>
       </section>
+
+      {/* LABEL DE ERROR JUNTO AL BOTÓN */}
+      {error && (
+        <div className="checkout-error-banner" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0' }}>
+          <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* BOTÓN DE FACTURAR */}
       <button

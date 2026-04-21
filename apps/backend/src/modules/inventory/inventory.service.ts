@@ -7,14 +7,14 @@ export const inventoryService = {
     /*********
     |   READ  |
      *********/
-    get: async (filters: GetInventoryFilters) => { 
-        return await inventoryModel.get(filters)
+    get: async (filters: GetInventoryFilters, tx?: Prisma.TransactionClient) => { 
+        return await inventoryModel.get(filters, tx)
     },
     getTotalQuantity: async (filters: GetQuantityInventoryFilters) => {
         return await inventoryModel.getTotalQuantity(filters)
     },
-    getNotExpired: async (filters: GetNotExpired) => { 
-        return await inventoryModel.getNotExpired(filters)
+    getNotExpired: async (filters: GetNotExpired, tx?: Prisma.TransactionClient) => { 
+        return await inventoryModel.getNotExpired(filters, tx)
     },
     getManyNotExpired: async (filters: GetNotExpired) => { 
         return await inventoryModel.getManyNotExpired(filters)
