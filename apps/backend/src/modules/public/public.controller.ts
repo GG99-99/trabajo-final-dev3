@@ -5,6 +5,20 @@ import { personService } from '../person/person.service.js'
 import { tattooService } from '../tattoo/tattoo.service.js'
 import { workerService } from '../worker/worker.service.js'
 import { registerBooking } from '../../middlewares/rateLimit.middleware.js'
+import { mailer } from '../../lib/mailer.js'
+
+// ── In-memory OTP store (email → { code, expiresAt }) ──────────────────────
+const otpStore = new Map<string, { code: string; expiresAt: number }>()
+const OTP_TTL_MS = 10 * 60 * 1000 // 10 minutes
+
+// ── Verified emails store (email → expiresAt) ────────────────────────────────
+// Only new users need to verify — existing clients are trusted by their record.
+const verifiedStore = new Map<string, number>()
+const VERIFIED_TTL_MS = 30 * 60 * 1000 // 30 minutes to complete booking after verification
+
+function generateOtp(): string {
+  return String(Math.floor(100000 + Math.random() * 900000))
+}
 
 export const publicController = {
   /** GET /api/public/tattoos */
@@ -17,6 +31,50 @@ export const publicController = {
   getWorkers: async (_req: Request, res: Response) => {
     const workers = await workerService.getMany()
     return res.json({ ok: true, data: workers, error: null })
+  },
+
+  /** POST /api/public/send-code — send 6-digit OTP to email */
+  sendCode: async (req: Request, res: Response) => {
+    const email = String(req.body.email ?? '').trim().toLowerCase()
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ ok: false, data: null, error: { name: 'BadRequest', statusCode: 400, message: 'Valid email required.' } })
+    }
+
+    const code = generateOtp()
+    otpStore.set(email, { code, expiresAt: Date.now() + OTP_TTL_MS })
+
+    try {
+      await mailer.sendOtp(email, code)
+      return res.json({ ok: true, data: { sent: true }, error: null })
+    } catch (err) {
+      console.error('[public.sendCode] Mailer error:', err)
+      return res.status(500).json({ ok: false, data: null, error: { name: 'MailError', statusCode: 500, message: 'Failed to send verification email.' } })
+    }
+  },
+
+  /** POST /api/public/verify-code — verify the OTP */
+  verifyCode: async (req: Request, res: Response) => {
+    const email = String(req.body.email ?? '').trim().toLowerCase()
+    const code  = String(req.body.code  ?? '').trim()
+    if (!email || !code) {
+      return res.status(400).json({ ok: false, data: null, error: { name: 'BadRequest', statusCode: 400, message: 'Email and code required.' } })
+    }
+
+    const entry = otpStore.get(email)
+    if (!entry) {
+      return res.status(400).json({ ok: false, data: null, error: { name: 'InvalidCode', statusCode: 400, message: 'No code was sent to this email or it has already been used.' } })
+    }
+    if (Date.now() > entry.expiresAt) {
+      otpStore.delete(email)
+      return res.status(400).json({ ok: false, data: null, error: { name: 'ExpiredCode', statusCode: 400, message: 'The verification code has expired. Please request a new one.' } })
+    }
+    if (entry.code !== code) {
+      return res.status(400).json({ ok: false, data: null, error: { name: 'InvalidCode', statusCode: 400, message: 'Incorrect verification code.' } })
+    }
+
+    otpStore.delete(email) // single-use
+    verifiedStore.set(email, Date.now() + VERIFIED_TTL_MS) // mark as verified
+    return res.json({ ok: true, data: { verified: true }, error: null })
   },
 
   /** GET /api/public/check-email?email= — check if email is already a client */
@@ -94,6 +152,22 @@ export const publicController = {
       }
     }
 
+    // ── For new users, enforce OTP verification before creating account ────────
+    if (!person || person.type !== 'client') {
+      const verifiedUntil = verifiedStore.get(email)
+      if (!verifiedUntil || Date.now() > verifiedUntil) {
+        return res.status(403).json({
+          ok: false, data: null,
+          error: {
+            name: 'EmailNotVerified',
+            statusCode: 403,
+            message: 'New users must verify their email before booking. Please request a verification code.'
+          }
+        })
+      }
+      verifiedStore.delete(email) // single-use: consumed on book
+    }
+
     // Resolve or create client
     let client_id: number
     if (person?.type === 'client') {
@@ -128,6 +202,34 @@ export const publicController = {
     // Register this IP as having booked today
     registerBooking(ip)
 
-    return res.json({ ok: true, data: appointment, error: null })
+    // ── Build appointment number like APPT-0042 ──────────────────────────────
+    const apptNumber = `APPT-${String(appointment.appointment_id).padStart(4, '0')}`
+
+    // ── Resolve names for confirmation email ─────────────────────────────────
+    try {
+      const worker = await workerService.get(Number(worker_id))
+      const tattoo = await tattooService.get({ tattoo_id: Number(tattoo_id) })
+      const clientName = `${first_name} ${last_name}`
+      const workerName = worker ? `${worker.person.first_name} ${worker.person.last_name}` : 'Your artist'
+      const tattooName = tattoo?.name ?? 'Your design'
+      const formattedDate = new Date(dateStr + 'T12:00:00.000Z').toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      })
+
+      await mailer.sendAppointmentConfirmation(email, {
+        clientName:  clientName,
+        workerName:  workerName,
+        tattooName:  tattooName,
+        date:        formattedDate,
+        start,
+        end,
+        apptNumber,
+      })
+    } catch (mailErr) {
+      // Non-fatal: booking is confirmed even if email fails
+      console.error('[public.book] Confirmation email failed:', mailErr)
+    }
+
+    return res.json({ ok: true, data: { ...appointment, apptNumber }, error: null })
   },
 }

@@ -9,4 +9,6 @@ publicRouter
   .get('/workers',     publicController.getWorkers)
   .get('/check-email', publicController.checkEmail)
   .get('/blocks',      publicController.getBlocks)
+  .post('/send-code',  publicController.sendCode)
+  .post('/verify-code', publicController.verifyCode)
   .post('/book',       publicBookingLimiter, ipDailyBookingGuard, publicController.book)

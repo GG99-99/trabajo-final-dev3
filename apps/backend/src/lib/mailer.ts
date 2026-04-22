@@ -1,34 +1,43 @@
-import nodemailer from 'nodemailer'
+// ── EmailJS REST API (Node.js — requires "Allow non-browser requests" enabled) ─
+// Dashboard: https://dashboard.emailjs.com/admin/account/security
+const EMAILJS_SERVICE_ID  = process.env.VITE_EMAILJS_SERVICE_ID       ?? ''
+const EMAILJS_PUBLIC_KEY  = process.env.VITE_EMAILJS_PUBLIC_KEY        ?? ''
+const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY            ?? ''
+const TPL_OTP             = process.env.VITE_EMAILJS_TEMPLATE_CHECKOUT ?? ''
+const TPL_CONFIRM         = process.env.VITE_EMAILJS_TEMPLATE_CONTACT  ?? ''
 
-const transporter = nodemailer.createTransport({
-    host:   process.env.MAIL_HOST   ?? 'smtp.gmail.com',
-    port:   Number(process.env.MAIL_PORT ?? 587),
-    secure: process.env.MAIL_SECURE === 'true',
-    auth: {
-        user: process.env.MAIL_USER!,
-        pass: process.env.MAIL_PASS!,
-    },
-})
-
-export type MailOptions = {
-    to:      string | string[]
-    subject: string
-    html:    string
-    text?:   string
+async function emailjsSend(templateId: string, templateParams: Record<string, string>) {
+    const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            service_id:      EMAILJS_SERVICE_ID,
+            template_id:     templateId,
+            user_id:         EMAILJS_PUBLIC_KEY,
+            accessToken:     EMAILJS_PRIVATE_KEY,
+            template_params: templateParams,
+        }),
+    })
+    if (!res.ok) {
+        const body = await res.text()
+        throw new Error(`EmailJS error ${res.status}: ${body}`)
+    }
+    return res
 }
 
 export const mailer = {
-    send: async (opts: MailOptions) => {
-        return transporter.sendMail({
-            from:    process.env.MAIL_FROM ?? `"Obsidian Archive" <${process.env.MAIL_USER}>`,
-            to:      Array.isArray(opts.to) ? opts.to.join(', ') : opts.to,
-            subject: opts.subject,
-            html:    opts.html,
-            text:    opts.text,
-        })
-    },
+    /** Send a 6-digit OTP code — uses VITE_EMAILJS_TEMPLATE_CHECKOUT
+     *  Template variables: {{user_name}}, {{message}}, {{otp_code}}, {{user_email}}
+     */
+    sendOtp: (to: string, code: string) =>
+        emailjsSend(TPL_OTP, {
+            user_name:  to.split('@')[0],
+            message:    'Tu código de verificación de Obsidian Tattoo Studio es:',
+            otp_code:   code,
+            user_email: to,
+        }),
 
-    /** Appointment confirmation email */
+    /** Send appointment confirmation — uses VITE_EMAILJS_TEMPLATE_CHECKOUT */
     sendAppointmentConfirmation: (to: string, data: {
         clientName:  string
         workerName:  string
@@ -36,32 +45,18 @@ export const mailer = {
         date:        string
         start:       string
         end:         string
-    }) => mailer.send({
-        to,
-        subject: 'Appointment Confirmed — Obsidian Archive',
-        html: `
-            <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0a0a0a;color:#e8e0d8;padding:40px 32px;border-radius:4px">
-                <h1 style="font-size:32px;font-weight:300;color:#ff5a66;margin:0 0 8px">You're booked.</h1>
-                <p style="color:#a09890;font-size:13px;margin:0 0 32px">Your session at Obsidian Archive has been confirmed.</p>
-                <table style="width:100%;border-collapse:collapse">
-                    ${[
-                        ['Client',  data.clientName],
-                        ['Artist',  data.workerName],
-                        ['Design',  data.tattooName],
-                        ['Date',    data.date],
-                        ['Time',    `${data.start} – ${data.end}`],
-                    ].map(([k, v]) => `
-                        <tr>
-                            <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:#a09890;font-size:11px;text-transform:uppercase;letter-spacing:0.2em;width:100px">${k}</td>
-                            <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:#e8e0d8;font-size:13px">${v}</td>
-                        </tr>
-                    `).join('')}
-                </table>
-                <p style="margin:32px 0 0;color:#a09890;font-size:11px">
-                    Permanence. Precision. The digital sanctuary for high-end somatic art.
-                </p>
-            </div>
-        `,
-        text: `Appointment confirmed at Obsidian Archive.\n\nClient: ${data.clientName}\nArtist: ${data.workerName}\nDesign: ${data.tattooName}\nDate: ${data.date}\nTime: ${data.start} – ${data.end}`,
-    }),
+        apptNumber?: string
+    }) =>
+        emailjsSend(TPL_OTP, {
+            user_name:  data.clientName,
+            message:    `Tu cita ha sido confirmada en Obsidian Tattoo Studio.\n\n` +
+                        `👤 Artista : ${data.workerName}\n` +
+                        `🎨 Servicio: ${data.tattooName}\n` +
+                        `📅 Fecha   : ${data.date}\n` +
+                        `🕐 Horario : ${data.start} – ${data.end}` +
+                        (data.apptNumber ? `\n📋 Ref.     : ${data.apptNumber}` : ''),
+            otp_code:   data.apptNumber ?? '—',
+            to_email:   to,
+            user_email: to,
+        }),
 }
