@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { CreateFullBill } from '@final/shared'
-import type { WorkerPublic, AppointmentWithRelation, ClientPublic, ProductVariantWithRelations, TattoWithImg } from '@final/shared'
+import type {
+  WorkerPublic,
+  AppointmentWithRelation,
+  ClientPublic,
+  ProductVariantWithRelations,
+  TattoWithImg,
+  PaymentMethod,
+} from '@final/shared'
 import { createBill, getWorkers, getAppointments, searchClientByEmail, getAllProductVariants, getAllTattoos } from '../services'
+import { useOfflineBillQueue, isTransientCreateFailure } from '../context/OfflineBillQueueContext.tsx'
 
 interface CartItem {
   id: string
@@ -19,7 +27,21 @@ interface Extra {
   discounts: { amount: number; reason: string }[]
 }
 
+interface DraftPayment {
+  id: string
+  amount: number
+  method: PaymentMethod
+  transaction_ref: string
+}
+
+const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  cash: 'Efectivo',
+  credit_card: 'Tarjeta',
+  transfer: 'Transferencia',
+}
+
 function CheckoutFormPage() {
+  const { enqueueBill } = useOfflineBillQueue()
   const [saleType, setSaleType] = useState<'direct' | 'appointment'>('direct')
   const [clientId, setClientId] = useState<number | null>(null)
   const [clientEmail, setClientEmail] = useState<string>('')
@@ -32,6 +54,7 @@ function CheckoutFormPage() {
     aggregates: [],
     discounts: [],
   })
+  const [draftPayments, setDraftPayments] = useState<DraftPayment[]>([])
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -157,6 +180,17 @@ function CheckoutFormPage() {
   const discountsTotal = extra.discounts.reduce((sum, disc) => sum + disc.amount, 0)
   const total = subtotal + aggregatesTotal - discountsTotal
 
+  const paymentsSum = useMemo(
+    () =>
+      draftPayments.reduce((sum, p) => {
+        const n = Number(p.amount)
+        return sum + (Number.isFinite(n) && n > 0 ? n : 0)
+      }, 0),
+    [draftPayments],
+  )
+  const debtRemaining = Math.max(0, total - paymentsSum)
+  const overpay = Math.max(0, paymentsSum - total)
+
   const addProductToCart = () => {
     if (!selectedProductVariantId) {
       setError('Por favor selecciona un producto')
@@ -237,6 +271,28 @@ function CheckoutFormPage() {
     })
   }
 
+  const addDraftPayment = () => {
+    setDraftPayments((prev) => [
+      ...prev,
+      {
+        id: `pay-${Date.now()}`,
+        amount: 0,
+        method: 'cash',
+        transaction_ref: '',
+      },
+    ])
+  }
+
+  const removeDraftPayment = (id: string) => {
+    setDraftPayments((prev) => prev.filter((p) => p.id !== id))
+  }
+
+  const updateDraftPayment = (id: string, patch: Partial<Omit<DraftPayment, 'id'>>) => {
+    setDraftPayments((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    )
+  }
+
   const handleGenerateBill = async () => {
     setError(null)
     setSuccess(null)
@@ -258,6 +314,8 @@ function CheckoutFormPage() {
     }
 
     setLoading(true)
+
+    let payload: CreateFullBill | null = null
 
     try {
       const tatto_ids = cartItems
@@ -286,15 +344,31 @@ function CheckoutFormPage() {
           })),
       }
 
+      const billCreateAt = new Date(date) || new Date()
+      const payments = draftPayments
+        .map((p) => {
+          const amt = Number(p.amount)
+          if (!Number.isFinite(amt) || amt <= 0) return null
+          return {
+            create_at: billCreateAt,
+            amount: amt,
+            method: p.method,
+            transaction_ref: p.transaction_ref.trim() !== '' ? p.transaction_ref.trim() : null,
+            is_refunded: false,
+          }
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null)
+
       // Preparar payload según CreateFullBill
-      const payload: CreateFullBill = {
+      payload = {
         client_id: clientId || undefined,
         worker_id: workerId,
         cashier_id: cashierId,
         appointment_id: appointmentId || undefined,
-        create_at: new Date(date) || new Date(),
+        create_at: billCreateAt,
         tatto_ids,
         items,
+        payments,
         extra: normalizedExtra,
       }
 
@@ -307,13 +381,29 @@ function CheckoutFormPage() {
       setSuccess('Factura creada exitosamente')
       setCartItems([])
       setExtra({ aggregates: [], discounts: [] })
+      setDraftPayments([])
       setClientId(null)
       setSaleType('direct')
     } catch (err: any) {
-      // Capturar error de Axios (respuesta HTTP con status 4xx/5xx)
-      const axiosMsg = err?.response?.data?.error
-      const fallback = err instanceof Error ? err.message : 'Error desconocido'
-      setError(typeof axiosMsg === 'string' ? axiosMsg : fallback)
+      if (payload && isTransientCreateFailure(err)) {
+        enqueueBill(payload)
+        setError(null)
+        setSuccess(
+          'Sin conexión con el servidor. La factura quedó en cola y se enviará sola cuando la API responda.',
+        )
+        setCartItems([])
+        setExtra({ aggregates: [], discounts: [] })
+        setDraftPayments([])
+        setClientId(null)
+        setClientEmail('')
+        setClientData(null)
+        setSaleType('direct')
+        setAppointmentId(null)
+      } else {
+        const axiosMsg = err?.response?.data?.error
+        const fallback = err instanceof Error ? err.message : 'Error desconocido'
+        setError(typeof axiosMsg === 'string' ? axiosMsg : fallback)
+      }
     } finally {
       setLoading(false)
     }
@@ -510,15 +600,24 @@ function CheckoutFormPage() {
                       </td>
                       <td>${item.price.toFixed(2)}</td>
                       <td>
-                        <input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                          style={{ width: '60px' }}
-                        />
+                        {item.type === 'tattoo' ? (
+                          <span className="checkout-cart-qty-na" title="Los tatuajes se facturan por unidad">
+                            —
+                          </span>
+                        ) : (
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
+                            style={{ width: '60px' }}
+                          />
+                        )}
                       </td>
-                      <td>${(item.price * item.quantity).toFixed(2)}</td>
+                      <td>
+                        $
+                        {(item.type === 'tattoo' ? item.price : item.price * item.quantity).toFixed(2)}
+                      </td>
                       <td>
                         <button onClick={() => removeFromCart(item.id)} className="btn-danger">
                           Eliminar
@@ -599,6 +698,93 @@ function CheckoutFormPage() {
           <button onClick={addDiscount} className="btn-secondary">
             + Descuento
           </button>
+        </section>
+
+        <section className="checkout-section checkout-payments-section">
+          <h3>Pagos en esta factura</h3>
+          <p className="checkout-payments-hint">
+            Opcional: registra abonos al crear la factura. El estado (pendiente / parcial / pagada) se actualizará en el servidor.
+          </p>
+          {draftPayments.length === 0 ? (
+            <p className="checkout-empty checkout-empty--inline">Sin pagos agregados</p>
+          ) : (
+            <div className="checkout-draft-payments">
+              {draftPayments.map((p) => (
+                <div key={p.id} className="checkout-draft-payment-row">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Monto"
+                    value={p.amount || ''}
+                    onChange={(e) =>
+                      updateDraftPayment(p.id, { amount: parseFloat(e.target.value) || 0 })
+                    }
+                  />
+                  <select
+                    value={p.method}
+                    onChange={(e) =>
+                      updateDraftPayment(p.id, { method: e.target.value as PaymentMethod })
+                    }
+                  >
+                    {(Object.keys(PAYMENT_METHOD_LABEL) as PaymentMethod[]).map((m) => (
+                      <option key={m} value={m}>
+                        {PAYMENT_METHOD_LABEL[m]}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Ref. transacción (opcional)"
+                    value={p.transaction_ref}
+                    onChange={(e) => updateDraftPayment(p.id, { transaction_ref: e.target.value })}
+                  />
+                  <button type="button" onClick={() => removeDraftPayment(p.id)} className="btn-danger">
+                    Quitar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button type="button" onClick={addDraftPayment} className="btn-secondary">
+            + Pago
+          </button>
+
+          <div
+            className={[
+              'checkout-debt-panel',
+              draftPayments.length > 0 ? 'checkout-debt-panel--active' : '',
+              paymentsSum > 0 && debtRemaining === 0 && total > 0 ? 'checkout-debt-panel--settled' : '',
+              paymentsSum > 0 && debtRemaining > 0 ? 'checkout-debt-panel--partial' : '',
+              overpay > 0 ? 'checkout-debt-panel--overpay' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <h4>Estado de cobro</h4>
+            <div className="checkout-debt-rows">
+              <div className="checkout-debt-row">
+                <span>Total a pagar (neto)</span>
+                <strong>${total.toFixed(2)}</strong>
+              </div>
+              <div className="checkout-debt-row">
+                <span>Abonado en esta pantalla</span>
+                <strong>${paymentsSum.toFixed(2)}</strong>
+              </div>
+              <div className="checkout-debt-row checkout-debt-row--highlight">
+                <span>Deuda pendiente</span>
+                <strong className={debtRemaining > 0 ? 'checkout-debt-amount--owes' : 'checkout-debt-amount--clear'}>
+                  ${debtRemaining.toFixed(2)}
+                </strong>
+              </div>
+              {overpay > 0 && (
+                <div className="checkout-debt-row checkout-debt-row--overpay">
+                  <span>Sobrepago (vuelto / a favor)</span>
+                  <strong>${overpay.toFixed(2)}</strong>
+                </div>
+              )}
+            </div>
+          </div>
         </section>
       </div>
 

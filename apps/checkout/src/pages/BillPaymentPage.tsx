@@ -291,10 +291,10 @@ function BillPaymentPage() {
                 <div className="checkout-list">
                   {payments
                     .filter((payment): payment is PaymentWithRelations => payment !== null)
-                    .map((payment) => (
+                    .map((payment, index) => (
                       <article key={payment.payment_id} className="checkout-card">
                         <p>
-                          <strong>Pago #{payment.payment_id}</strong>
+                          <strong>Pago #{index + 1}</strong>
                         </p>
                         <p>Monto: ${Number(payment.amount).toFixed(2)}</p>
                         <p>Metodo: {PAYMENT_METHOD_LABEL[payment.method]}</p>

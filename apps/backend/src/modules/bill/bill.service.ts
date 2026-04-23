@@ -79,7 +79,8 @@ export const billService = {
                 worker_id: data.worker_id,
                 cashier_id: data.cashier_id,
                 appointment_id: data.appointment_id ?? undefined,
-                create_at: data.create_at
+                create_at: data.create_at,
+                payments: data.payments ?? [],
 
             }, tx)
            
