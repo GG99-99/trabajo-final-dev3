@@ -90,7 +90,7 @@ export default function PublicBooking() {
   const [selSlotIdx, setSelSlotIdx] = useState<number | ''>('')
 
   // ── email-first flow state ──
-  // step: 0=email, 1=personal info (new users only), 2=session, 3=slot, 4=confirm
+  // step: 0=email+OTP, 1=personal info (new users only), 2=session, 3=slot, 4=confirm
   const [flowStep,           setFlowStep]           = useState(0)
   const [emailChecked,       setEmailChecked]       = useState(false)
   const [isExistingClient,   setIsExistingClient]   = useState(false)
@@ -98,6 +98,14 @@ export default function PublicBooking() {
   const [emailCheckLoading,  setEmailCheckLoading]  = useState(false)
   const [emailInput,         setEmailInput]         = useState('')
   const [emailError,         setEmailError]         = useState<string | null>(null)
+
+  // ── OTP state ──
+  const [otpSent,        setOtpSent]        = useState(false)
+  const [otpLoading,     setOtpLoading]     = useState(false)
+  const [otpInput,       setOtpInput]       = useState('')
+  const [otpError,       setOtpError]       = useState<string | null>(null)
+  const [otpVerified,    setOtpVerified]    = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   // ── personal info state (new users) ──
   const [firstName,    setFirstName]    = useState('')
@@ -111,6 +119,7 @@ export default function PublicBooking() {
   const [submitting,    setSubmitting]    = useState(false)
   const [apiError,      setApiError]      = useState<string | null>(null)
   const [success,       setSuccess]       = useState(false)
+  const [apptNumber,    setApptNumber]    = useState<string | null>(null)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: yupResolver(schema),
@@ -122,6 +131,13 @@ export default function PublicBooking() {
       if (w.ok) setWorkers(w.data)
     })
   }, [])
+
+  // ── Resend cooldown timer ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCooldown])
 
   const selectedTattoo = tattoos.find(t => t.tattoo_id === Number(selTattoo))
   const selectedWorker = workers.find(w => w.worker_id === Number(selWorker))
@@ -135,7 +151,53 @@ export default function PublicBooking() {
     setBlocks([])
   }
 
-  // ── Step 0: check email ──────────────────────────────────────────────────
+  // ── Step 0a: send OTP ────────────────────────────────────────────────────
+  async function handleSendCode() {
+    setEmailError(null)
+    const trimmed = emailInput.trim()
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailError('Please enter a valid email address.')
+      return
+    }
+    setOtpLoading(true)
+    try {
+      const res = await publicService.sendCode(trimmed)
+      if (!res.ok) { setEmailError('Failed to send code. Please try again.'); return }
+      setOtpSent(true)
+      setResendCooldown(60)
+      setOtpInput('')
+      setOtpError(null)
+    } catch {
+      setEmailError('Failed to send code. Please try again.')
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  // ── Step 0b: verify OTP then check email ─────────────────────────────────
+  async function handleVerifyAndContinue() {
+    setOtpError(null)
+    if (!otpInput.trim() || otpInput.trim().length !== 6) {
+      setOtpError('Please enter the 6-digit code sent to your email.')
+      return
+    }
+    setEmailCheckLoading(true)
+    try {
+      const verRes = await publicService.verifyCode(emailInput.trim(), otpInput.trim())
+      if (!verRes.ok) {
+        setOtpError((verRes as any).error?.message ?? 'Invalid or expired code.')
+        return
+      }
+      setOtpVerified(true)
+      await handleEmailContinue()
+    } catch {
+      setOtpError('Verification failed. Please try again.')
+    } finally {
+      setEmailCheckLoading(false)
+    }
+  }
+
+  // ── Step 0c: check email (called after OTP verified) ─────────────────────
   async function handleEmailContinue() {
     setEmailError(null)
     const trimmed = emailInput.trim()
@@ -236,10 +298,12 @@ export default function PublicBooking() {
     })
     setSubmitting(false)
     if (!res.ok) { setApiError(res.error.message); return }
+    setApptNumber((res.data as any)?.apptNumber ?? null)
     setSuccess(true)
     reset()
     setEmailInput(''); setFirstName(''); setLastName(''); setMedicalNotes('')
     setEmailChecked(false); setIsExistingClient(false); setExistingClientData(null)
+    setOtpSent(false); setOtpVerified(false); setOtpInput(''); setOtpError(null); setResendCooldown(0)
     setFlowStep(0)
     setSelTattoo(''); setSelWorker(''); setSelDate(today)
     setSelSlotIdx(''); resetSlots()
@@ -269,11 +333,18 @@ export default function PublicBooking() {
                 Your session has been confirmed.<br />
                 We'll see you soon at Obsidian Archive.
               </p>
+              {apptNumber && (
+                <div className="mt-5 inline-block bg-[#1a1a1a] border border-white/10 rounded-sm px-5 py-3">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-white/30 mb-1">Order number</p>
+                  <p className="text-[20px] font-semibold tracking-[0.15em] text-[#ff5a66]">{apptNumber}</p>
+                  <p className="text-[10px] text-white/25 mt-1">Check your email for confirmation</p>
+                </div>
+              )}
             </div>
             <div className="h-px bg-white/10" />
             <div className="flex gap-3 justify-center">
               <button
-                onClick={() => setSuccess(false)}
+                onClick={() => { setSuccess(false); setApptNumber(null) }}
                 className="h-11 px-6 bg-[#ff5a66] hover:bg-[#ff7078] text-black text-[10px] font-bold uppercase tracking-[0.3em] rounded-sm transition-colors"
               >
                 Book another
@@ -378,16 +449,67 @@ export default function PublicBooking() {
                 )}
               </div>
 
-              {!emailChecked ? (
+              {/* ── OTP block (shown after Send Code is clicked) ── */}
+              {!emailChecked && otpSent && (
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelCls}>Verification Code</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={otpInput}
+                      onChange={e => { setOtpInput(e.target.value.replace(/\D/g, '')); setOtpError(null) }}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleVerifyAndContinue() } }}
+                      className={inputCls}
+                      placeholder="Enter 6-digit code"
+                    />
+                    {otpError && (
+                      <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-sm border bg-[#ff5a66]/5 border-[#ff5a66]/20">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#ff5a66]/90" />
+                        <p className="text-[11px] text-[#ff5a66]/90 leading-relaxed">{otpError}</p>
+                      </div>
+                    )}
+                    <p className="mt-2 text-[10px] text-white/25">
+                      Code sent to <span className="text-white/50">{emailInput}</span>.
+                      {resendCooldown > 0
+                        ? <> Resend in {resendCooldown}s.</>
+                        : <> <button type="button" onClick={handleSendCode} className="underline text-white/40 hover:text-white/70 transition-colors">Resend code</button>.</>}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleVerifyAndContinue}
+                    disabled={emailCheckLoading || otpInput.length !== 6}
+                    className="w-full h-11 bg-[#ff5a66] hover:bg-[#ff7078] text-black text-[10px] font-bold uppercase tracking-[0.3em] rounded-sm disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                  >
+                    {emailCheckLoading ? (
+                      <><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/30 border-t-black" /> Verifying…</>
+                    ) : 'Verify & Continue →'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setOtpSent(false); setOtpInput(''); setOtpError(null); setEmailError(null) }}
+                    className="w-full text-[10px] uppercase tracking-[0.2em] text-white/25 hover:text-white/50 transition-colors"
+                  >
+                    ← Change email
+                  </button>
+                </div>
+              )}
+
+              {/* ── Initial: just the Send Code button ── */}
+              {!emailChecked && !otpSent ? (
                 <button
                   type="button"
-                  onClick={handleEmailContinue}
-                  disabled={emailCheckLoading}
+                  onClick={handleSendCode}
+                  disabled={otpLoading}
                   className="w-full h-11 bg-[#ff5a66] hover:bg-[#ff7078] text-black text-[10px] font-bold uppercase tracking-[0.3em] rounded-sm disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
-                  {emailCheckLoading ? (
-                    <><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/30 border-t-black" /> Checking…</>
-                  ) : 'Continue →'}
+                  {otpLoading ? (
+                    <><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/30 border-t-black" /> Sending code…</>
+                  ) : 'Send verification code →'}
                 </button>
               ) : (
                 <button
@@ -396,6 +518,7 @@ export default function PublicBooking() {
                     setEmailChecked(false); setIsExistingClient(false)
                     setExistingClientData(null); setFlowStep(0)
                     setFirstName(''); setLastName(''); setMedicalNotes('')
+                    setOtpSent(false); setOtpVerified(false); setOtpInput(''); setOtpError(null); setResendCooldown(0)
                     resetSlots(); setSelTattoo(''); setSelWorker(''); setSelDate(today)
                   }}
                   className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white/60 transition-colors"
