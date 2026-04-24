@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CreateBill, BillWithRelations } from '@final/shared'
+import type { CreateBill, BillWithRelations } from '@final/shared'
 import { checkoutService } from '../services'
 
 function CheckoutPage() {

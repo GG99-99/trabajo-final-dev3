@@ -3,7 +3,7 @@ import BillPaymentPage from './pages/BillPaymentPage.js'
 import CashRegisterClosePage from './pages/CashRegisterClosePage.js'
 import LoginPage from './pages/LoginPage.js'
 import { useState, useEffect, useCallback } from 'react'
-import { useOfflineBillQueue } from './context/OfflineBillQueueContext.tsx'
+import { useOfflineBillQueue } from './context/OfflineBillQueueContext'
 import { getCashierMe, logoutCashier } from './services'
 
 type ViewMode = 'billing' | 'payments' | 'cashclose'

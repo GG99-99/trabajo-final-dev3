@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type {
   BillFinance,
   BillWithRelations,
@@ -40,7 +40,7 @@ function BillPaymentPage() {
 
   const selectedDebt = selectedBill?.finance.debt ?? 0
 
-  const refreshBills = async () => {
+  const refreshBills = useCallback(async () => {
     setLoadingBills(true)
     setError(null)
     try {
@@ -76,9 +76,9 @@ function BillPaymentPage() {
     } finally {
       setLoadingBills(false)
     }
-  }
+  }, [selectedBill])
 
-  const refreshPayments = async (billId: number) => {
+  const refreshPayments = useCallback(async (billId: number) => {
     setLoadingPayments(true)
     setError(null)
     try {
@@ -92,11 +92,11 @@ function BillPaymentPage() {
     } finally {
       setLoadingPayments(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     void refreshBills()
-  }, [])
+  }, [refreshBills])
 
   const handleSelectBill = async (billCard: BillCard) => {
     setSelectedBill(billCard)
