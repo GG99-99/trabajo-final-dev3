@@ -8,6 +8,8 @@ export declare const workerService: {
             email: string;
             password: string | null;
             type: import("@prisma/client").$Enums.PersonType;
+            tag: string | null;
+            is_deleted: boolean;
         };
     } & {
         person_id: number;

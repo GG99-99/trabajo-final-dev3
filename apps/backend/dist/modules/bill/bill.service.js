@@ -15,21 +15,31 @@ export const billService = {
             throw ({});
         // obtener tattoos 
         const tattoos = await billService.getTattoos(bill_id);
+        // obtener stock movements
+        const costs = await Promise.all(bill.details.map((ag) => stockMovementService.getCost(ag.stock_movement_id)));
+        // sum
+        const itemsTotal = costs.reduce((acc, cost) => acc + cost, 0);
         const aggregatesTotal = bill.aggregates.reduce((acc, ag) => acc + Number(ag.amount), 0);
         const tattoosTotal = tattoos.reduce((acc, t) => acc + Number(t.price), 0);
+        // minus
         const discountTotal = bill.discounts.reduce((acc, d) => acc + Number(d.amount), 0);
         const paymentsTotal = bill.payments
             .filter((p) => !p.is_refunded)
             .reduce((acc, p) => acc + Number(p.amount), 0);
-        const total = aggregatesTotal + tattoosTotal;
-        const rawDebt = total - discountTotal - paymentsTotal;
+        const total = aggregatesTotal + tattoosTotal + itemsTotal;
+        const totalAfterDiscount = total - discountTotal;
+        const tax = totalAfterDiscount * 0.18;
+        const totalWithTax = totalAfterDiscount + tax;
+        const rawDebt = totalWithTax - paymentsTotal;
         const debt = Math.max(0, rawDebt);
         const overpaid = rawDebt < 0 ? Math.abs(rawDebt) : 0;
         return {
             bill_id,
             total, // total bruto (antes de descuentos)
             total_discount: discountTotal, // cuanto se descontó
-            total_after_discount: total - discountTotal, // total real a pagar
+            total_after_discount: totalAfterDiscount, // total real a pagar (sin impuesto)
+            tax, // impuesto del 18%
+            total_with_tax: totalWithTax, // total con impuesto incluido
             debt, // lo que falta por pagar (ya restando pagos)
             overpaid
         };
@@ -53,7 +63,8 @@ export const billService = {
                 worker_id: data.worker_id,
                 cashier_id: data.cashier_id,
                 appointment_id: data.appointment_id ?? undefined,
-                create_at: data.create_at
+                create_at: data.create_at,
+                payments: data.payments ?? [],
             }, tx);
             for (const item of data.items) {
                 /*****************************************************

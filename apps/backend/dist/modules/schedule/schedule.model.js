@@ -18,6 +18,9 @@ export const scheduleModel = {
             where: {
                 worker_id: worker_id,
                 active: true
+            },
+            orderBy: {
+                created_at: 'desc'
             }
         });
     },

@@ -8,6 +8,9 @@ export const tattooService = {
     get: async (data) => {
         return await tattooModel.get(data);
     },
+    getMany: async () => {
+        return await tattooModel.getMany();
+    },
     getMaterials: async ({ tattoo_id }) => {
         return await tattooModel.getMaterials({ tattoo_id });
     },

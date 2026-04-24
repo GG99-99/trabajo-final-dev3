@@ -12,7 +12,13 @@ export const billModel = {
                 tattoos: filters.relations || undefined,
                 payments: filters.relations || undefined,
                 aggregates: filters.relations || undefined,
-                discounts: filters.relations || undefined
+                discounts: filters.relations || undefined,
+                client: {
+                    include: { person: filters.relations || undefined }
+                },
+                worker: {
+                    include: { person: filters.relations || undefined }
+                },
             }
         });
     },
@@ -28,11 +34,17 @@ export const billModel = {
                 ...(filters.cashier_id && { cashier_id: filters.cashier_id }),
             },
             include: {
-                details: filters.relations || undefined,
-                tattoos: filters.relations || undefined,
-                payments: filters.relations || undefined,
-                aggregates: filters.relations || undefined,
-                discounts: filters.relations || undefined
+                details: true,
+                tattoos: true,
+                payments: true,
+                aggregates: true,
+                discounts: true,
+                client: {
+                    include: { person: true }
+                },
+                worker: {
+                    include: { person: true }
+                },
             }
         });
     },
@@ -102,8 +114,24 @@ export const billModel = {
     |   CREATE  |
      ***********/
     create: async (data, tx) => {
+        const { payments, ...rest } = data;
         return await tx.bill.create({
-            data: { ...data }
+            data: {
+                ...rest,
+                payments: payments ? {
+                    create: payments.map(payment => ({
+                        cashier_id: data.cashier_id,
+                        create_at: payment.create_at,
+                        amount: payment.amount,
+                        method: payment.method,
+                        transaction_ref: payment.transaction_ref,
+                        is_refunded: payment.is_refunded
+                    }))
+                } : undefined
+            },
+            include: {
+                payments: true
+            }
         });
     },
     createBillDetail: async (data, tx) => {

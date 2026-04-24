@@ -10,8 +10,8 @@ export declare const categoryService: {
         }[];
     } & {
         name: string;
-        category_id: number;
         description: string | null;
+        category_id: number;
     }) | null>;
     getMany: (filters: GetManyCategory) => Promise<(({
         products: {
@@ -23,13 +23,13 @@ export declare const categoryService: {
         }[];
     } & {
         name: string;
-        category_id: number;
         description: string | null;
+        category_id: number;
     }) | null)[]>;
     create: (data: CreateCategory) => Promise<{
         name: string;
-        category_id: number;
         description: string | null;
+        category_id: number;
     }>;
 };
 //# sourceMappingURL=category.service.d.ts.map

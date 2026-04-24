@@ -123,6 +123,8 @@ export type BillFinance = {
     total: number;
     total_discount: number;
     total_after_discount: number;
+    tax: number;
+    total_with_tax: number;
     debt: number;
     overpaid: number;
 };

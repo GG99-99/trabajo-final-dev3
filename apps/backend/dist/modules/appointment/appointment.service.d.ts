@@ -1,61 +1,50 @@
 import { AppointmentStatus, Prisma } from "@final/db";
-import { AppointmentBlockTime, ScheduleJsonDay, GetAppointmentFilters, GetBlocks, CreateAppointment } from "@final/shared";
+import { AppointmentBlockTime, ScheduleJsonDay, GetAppointmentFilters, GetBlocks, CreateAppointment, AppointmentWithRelation } from "@final/shared";
 export declare const appointmentService: {
     /***********
     |   CREATE  |
      ***********/
     create: (data: CreateAppointment) => Promise<{
-        client_id: number;
+        is_deleted: boolean;
         worker_id: number;
+        client_id: number;
         end: string;
         appointment_id: number;
         tattoo_id: number;
         start: string;
         date: Date;
         create_at: Date;
-        is_deleted: boolean;
         status: import("@final/db").$Enums.AppointmentStatus;
-    } | null>;
+    }>;
     /*********
     |   READ  |
      *********/
-    getMany: (filters: GetAppointmentFilters) => Promise<{
-        client_id: number;
-        worker_id: number;
-        end: string;
-        appointment_id: number;
-        tattoo_id: number;
-        start: string;
-        date: Date;
-        create_at: Date;
-        is_deleted: boolean;
-        status: import("@final/db").$Enums.AppointmentStatus;
-    }[]>;
+    getMany: (filters: GetAppointmentFilters) => Promise<AppointmentWithRelation[]>;
     /***********
     |   UPDATE  |
      ***********/
     updateStatus: (appointment_id: number, status: AppointmentStatus, tx: Prisma.TransactionClient) => Promise<{
-        client_id: number;
+        is_deleted: boolean;
         worker_id: number;
+        client_id: number;
         end: string;
         appointment_id: number;
         tattoo_id: number;
         start: string;
         date: Date;
         create_at: Date;
-        is_deleted: boolean;
         status: import("@final/db").$Enums.AppointmentStatus;
     }>;
     updateStatusDirect: (appointment_id: number, status: AppointmentStatus) => Promise<{
-        client_id: number;
+        is_deleted: boolean;
         worker_id: number;
+        client_id: number;
         end: string;
         appointment_id: number;
         tattoo_id: number;
         start: string;
         date: Date;
         create_at: Date;
-        is_deleted: boolean;
         status: import("@final/db").$Enums.AppointmentStatus;
     }>;
     /****************

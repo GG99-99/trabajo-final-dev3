@@ -9,6 +9,7 @@ export declare const clientModel: {
         client_id: number;
     } | null>;
     getMany: () => Promise<ClientWithRelations[]>;
+    getByEmail: (email: string) => Promise<ClientWithRelations | null>;
     /***********
     |   CREATE  |
      ***********/

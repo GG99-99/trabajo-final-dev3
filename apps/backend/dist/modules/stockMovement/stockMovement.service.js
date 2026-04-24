@@ -2,8 +2,12 @@ import { stockMovementModel } from "./stockMovement.model.js";
 import { inventoryModel } from "../inventory/inventory.model.js";
 import { inventoryService } from "../inventory/inventory.service.js";
 export const stockMovementService = {
-    get: async (filters) => {
-        return await stockMovementModel.get(filters);
+    get: async (filters, tx) => {
+        return await stockMovementModel.get(filters, tx);
+    },
+    getCost: async (stock_movement_id, tx) => {
+        const st = await stockMovementModel.get({ stock_movement_id }, tx);
+        return Number(st?.quantity) * Number(st?.inventoryItem.productVariant.price);
     },
     /***********
     |   CREATE  |
@@ -12,10 +16,9 @@ export const stockMovementService = {
         // validar si puedo reducir
         if (data.type !== "entry") {
             const item = await inventoryModel.get({
-                // es por id la busqueda pero le paso un gte para validar indirectamente que tiene la cantidad necesaria
                 inventory_item_id: data.inventory_item_id,
                 gte: data.quantity
-            });
+            }, tx);
             if (!item)
                 throw { name: "InsufficientQuantity", statusCode: 400, message: "no hay cantidad suficiente para realizar extraccion del inventario" };
         }
@@ -29,12 +32,23 @@ export const stockMovementService = {
         return stockMovement;
     },
     createForProductVariant: async (data, tx) => {
-        // obtener inventory_item
+        // obtener inventory_item no expirado con stock suficiente (usando tx para evitar deadlock)
         const item = await inventoryService.getNotExpired({
             product_variant_id: data.product_variant_id,
-        });
+        }, tx);
         if (!item)
-            throw {};
+            throw {
+                name: 'InsufficientQuantity',
+                statusCode: 400,
+                message: `Sin stock disponible para product_variant_id=${data.product_variant_id}. Verifique el inventario.`
+            };
+        // validar que la cantidad disponible alcanza
+        if (Number(item.current_quantity) < data.quantity)
+            throw {
+                name: 'InsufficientQuantity',
+                statusCode: 400,
+                message: `Stock insuficiente para product_variant_id=${data.product_variant_id}. Disponible: ${item.current_quantity}, solicitado: ${data.quantity}.`
+            };
         return await stockMovementService.create({
             inventory_item_id: item.inventory_item_id,
             reason: data.reason,

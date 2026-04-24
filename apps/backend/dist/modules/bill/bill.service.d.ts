@@ -6,37 +6,69 @@ export declare const billService: {
             cashier_id: number;
             create_at: Date;
             bill_id: number;
+            method: import("@final/db").$Enums.PaymentMethod;
             payment_id: number;
             amount: Prisma.Decimal;
-            method: import("@final/db").$Enums.PaymentMethod;
-            transaction_ref: string;
+            transaction_ref: string | null;
             is_refunded: boolean;
         }[];
+        worker: {
+            person: {
+                person_id: number;
+                first_name: string;
+                last_name: string;
+                email: string;
+                password: string | null;
+                type: import("@final/db").$Enums.PersonType;
+                tag: string | null;
+                is_deleted: boolean;
+            };
+        } & {
+            person_id: number;
+            specialty: import("@final/db").$Enums.WorkerSpecialty;
+            worker_id: number;
+        };
+        client: ({
+            person: {
+                person_id: number;
+                first_name: string;
+                last_name: string;
+                email: string;
+                password: string | null;
+                type: import("@final/db").$Enums.PersonType;
+                tag: string | null;
+                is_deleted: boolean;
+            };
+        } & {
+            person_id: number;
+            medical_notes: string | null;
+            client_id: number;
+        }) | null;
         details: {
-            stock_movement_id: number;
             bill_id: number;
+            stock_movement_id: number;
             bill_detail_id: number;
         }[];
         tattoos: {
             tattoo_id: number;
             bill_id: number;
         }[];
-        aggregates: {
-            reason: string;
-            bill_id: number;
-            amount: Prisma.Decimal;
-            bill_aggregate_id: number;
-        }[];
         discounts: {
-            reason: string;
             bill_id: number;
+            reason: string;
             amount: Prisma.Decimal;
             bill_discount_id: number;
         }[];
+        aggregates: {
+            bill_id: number;
+            reason: string;
+            amount: Prisma.Decimal;
+            bill_aggregate_id: number;
+        }[];
     } & {
-        client_id: number;
-        worker_id: number;
         cashier_id: number;
+        worker_id: number;
+        client_id: number | null;
         appointment_id: number | null;
         create_at: Date;
         status: import("@final/db").$Enums.BillStatus;
@@ -47,37 +79,69 @@ export declare const billService: {
             cashier_id: number;
             create_at: Date;
             bill_id: number;
+            method: import("@final/db").$Enums.PaymentMethod;
             payment_id: number;
             amount: Prisma.Decimal;
-            method: import("@final/db").$Enums.PaymentMethod;
-            transaction_ref: string;
+            transaction_ref: string | null;
             is_refunded: boolean;
         }[];
+        worker: {
+            person: {
+                person_id: number;
+                first_name: string;
+                last_name: string;
+                email: string;
+                password: string | null;
+                type: import("@final/db").$Enums.PersonType;
+                tag: string | null;
+                is_deleted: boolean;
+            };
+        } & {
+            person_id: number;
+            specialty: import("@final/db").$Enums.WorkerSpecialty;
+            worker_id: number;
+        };
+        client: ({
+            person: {
+                person_id: number;
+                first_name: string;
+                last_name: string;
+                email: string;
+                password: string | null;
+                type: import("@final/db").$Enums.PersonType;
+                tag: string | null;
+                is_deleted: boolean;
+            };
+        } & {
+            person_id: number;
+            medical_notes: string | null;
+            client_id: number;
+        }) | null;
         details: {
-            stock_movement_id: number;
             bill_id: number;
+            stock_movement_id: number;
             bill_detail_id: number;
         }[];
         tattoos: {
             tattoo_id: number;
             bill_id: number;
         }[];
-        aggregates: {
-            reason: string;
-            bill_id: number;
-            amount: Prisma.Decimal;
-            bill_aggregate_id: number;
-        }[];
         discounts: {
-            reason: string;
             bill_id: number;
+            reason: string;
             amount: Prisma.Decimal;
             bill_discount_id: number;
         }[];
+        aggregates: {
+            bill_id: number;
+            reason: string;
+            amount: Prisma.Decimal;
+            bill_aggregate_id: number;
+        }[];
     } & {
-        client_id: number;
-        worker_id: number;
         cashier_id: number;
+        worker_id: number;
+        client_id: number | null;
         appointment_id: number | null;
         create_at: Date;
         status: import("@final/db").$Enums.BillStatus;
@@ -90,9 +154,20 @@ export declare const billService: {
     |   CREATE  |
      ***********/
     create: (data: CreateFullBill) => Promise<{
-        client_id: number;
-        worker_id: number;
+        payments: {
+            cashier_id: number;
+            create_at: Date;
+            bill_id: number;
+            method: import("@final/db").$Enums.PaymentMethod;
+            payment_id: number;
+            amount: Prisma.Decimal;
+            transaction_ref: string | null;
+            is_refunded: boolean;
+        }[];
+    } & {
         cashier_id: number;
+        worker_id: number;
+        client_id: number | null;
         appointment_id: number | null;
         create_at: Date;
         status: import("@final/db").$Enums.BillStatus;
@@ -106,18 +181,18 @@ export declare const billService: {
     |   UPDATE  |
      ***********/
     updateState: (data: UpdateBillStatus, tx: Prisma.TransactionClient) => Promise<{
-        client_id: number;
-        worker_id: number;
         cashier_id: number;
+        worker_id: number;
+        client_id: number | null;
         appointment_id: number | null;
         create_at: Date;
         status: import("@final/db").$Enums.BillStatus;
         bill_id: number;
     }>;
     updateStateDirect: (data: UpdateBillStatus) => Promise<{
-        client_id: number;
-        worker_id: number;
         cashier_id: number;
+        worker_id: number;
+        client_id: number | null;
         appointment_id: number | null;
         create_at: Date;
         status: import("@final/db").$Enums.BillStatus;

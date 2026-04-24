@@ -7,17 +7,17 @@ export declare const assistService: {
             worker_id: number;
         };
         attendance: {
-            day: string;
             is_deleted: boolean;
+            day: string;
             status: boolean;
             attendance_id: number;
             work_date: Date;
         };
     } & {
+        is_deleted: boolean;
         worker_id: number;
         close: Date | null;
         start: Date;
-        is_deleted: boolean;
         attendance_id: number;
         alert: boolean;
         alert_text: string | null;
@@ -29,17 +29,17 @@ export declare const assistService: {
             worker_id: number;
         };
         attendance: {
-            day: string;
             is_deleted: boolean;
+            day: string;
             status: boolean;
             attendance_id: number;
             work_date: Date;
         };
     } & {
+        is_deleted: boolean;
         worker_id: number;
         close: Date | null;
         start: Date;
-        is_deleted: boolean;
         attendance_id: number;
         alert: boolean;
         alert_text: string | null;
@@ -51,17 +51,17 @@ export declare const assistService: {
             worker_id: number;
         };
         attendance: {
-            day: string;
             is_deleted: boolean;
+            day: string;
             status: boolean;
             attendance_id: number;
             work_date: Date;
         };
     } & {
+        is_deleted: boolean;
         worker_id: number;
         close: Date | null;
         start: Date;
-        is_deleted: boolean;
         attendance_id: number;
         alert: boolean;
         alert_text: string | null;

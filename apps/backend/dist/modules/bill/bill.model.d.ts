@@ -12,17 +12,28 @@ export declare const billModel: {
     |   CREATE  |
      ***********/
     create: (data: CreateBill, tx: Prisma.TransactionClient) => Promise<{
-        client_id: number;
-        worker_id: number;
+        payments: {
+            cashier_id: number;
+            create_at: Date;
+            bill_id: number;
+            method: import("@final/db").$Enums.PaymentMethod;
+            payment_id: number;
+            amount: Prisma.Decimal;
+            transaction_ref: string | null;
+            is_refunded: boolean;
+        }[];
+    } & {
         cashier_id: number;
+        worker_id: number;
+        client_id: number | null;
         appointment_id: number | null;
         create_at: Date;
         status: import("@final/db").$Enums.BillStatus;
         bill_id: number;
     }>;
     createBillDetail: (data: CreateBillDetail, tx: Prisma.TransactionClient) => Promise<{
-        stock_movement_id: number;
         bill_id: number;
+        stock_movement_id: number;
         bill_detail_id: number;
     }>;
     createBillTatto: (data: CreateBillTattoo, tx: Prisma.TransactionClient) => Promise<{
@@ -30,14 +41,14 @@ export declare const billModel: {
         bill_id: number;
     }>;
     createBillAggregate: (data: CreateBillAggregate, tx: Prisma.TransactionClient) => Promise<{
-        reason: string;
         bill_id: number;
+        reason: string;
         amount: Prisma.Decimal;
         bill_aggregate_id: number;
     }>;
     createBillDiscount: (data: CreateBillDiscount, tx: Prisma.TransactionClient) => Promise<{
-        reason: string;
         bill_id: number;
+        reason: string;
         amount: Prisma.Decimal;
         bill_discount_id: number;
     }>;
@@ -45,9 +56,9 @@ export declare const billModel: {
     |   UPDATE  |
      ***********/
     updateStatus: (data: UpdateBillStatus, tx: Prisma.TransactionClient) => Promise<{
-        client_id: number;
-        worker_id: number;
         cashier_id: number;
+        worker_id: number;
+        client_id: number | null;
         appointment_id: number | null;
         create_at: Date;
         status: import("@final/db").$Enums.BillStatus;

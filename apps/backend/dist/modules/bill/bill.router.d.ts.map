@@ -1,1 +1,1 @@
-{"version":3,"file":"bill.router.d.ts","sourceRoot":"","sources":["../../../src/modules/bill/bill.router.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAKjC,eAAO,MAAM,UAAU,EAAE,MAAiB,CAAC"}
+{"version":3,"file":"bill.router.d.ts","sourceRoot":"","sources":["../../../src/modules/bill/bill.router.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAIjC,eAAO,MAAM,UAAU,EAAE,MAAiB,CAAC"}

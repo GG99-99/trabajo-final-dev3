@@ -5,6 +5,8 @@ import * as appointmentService from './appointmentService'
 import * as clientService from './clientService'
 import * as productVariantService from './productVariantService'
 import * as tattooService from './tattooService'
+import * as authService from './authService'
+import * as cashRegisterService from './cashRegisterService'
 
 export const checkoutService = {
   ...billService,
@@ -14,6 +16,8 @@ export const checkoutService = {
   ...clientService,
   ...productVariantService,
   ...tattooService,
+  ...authService,
+  ...cashRegisterService,
 }
 
 // Re-exportar todas las funciones directamente
@@ -26,3 +30,4 @@ export * from './productVariantService'
 export * from './tattooService'
 export * from './healthService'
 export * from './authService'
+export * from './cashRegisterService'

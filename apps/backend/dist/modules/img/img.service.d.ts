@@ -11,10 +11,12 @@ export declare const imgService: {
      ***********/
     create: (data: CreateImg, tx: Prisma.TransactionClient) => Promise<{
         create_at: Date;
-        active: boolean;
         img_id: number;
+        active: boolean;
+        source: Prisma.Bytes | null;
         description: string | null;
-        source: Prisma.Bytes;
+        s3_key: string | null;
+        s3_url: string | null;
     }>;
 };
 //# sourceMappingURL=img.service.d.ts.map

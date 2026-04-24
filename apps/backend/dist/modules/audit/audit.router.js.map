@@ -1,0 +1,1 @@
+{"version":3,"file":"audit.router.js","sourceRoot":"","sources":["../../../src/modules/audit/audit.router.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAA;AAChC,OAAO,EAAE,eAAe,EAAE,MAAM,uBAAuB,CAAA;AAEvD,MAAM,CAAC,MAAM,WAAW,GAAW,MAAM,EAAE,CAAA;AAE3C,WAAW;KACN,GAAG,CAAC,GAAG,EAAE,eAAe,CAAC,OAAO,CAAC,CAAA"}

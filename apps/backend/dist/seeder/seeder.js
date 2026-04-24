@@ -8,6 +8,8 @@ import { seedProviders } from "./data/seed.providers.js";
 import { seedSeats } from "./data/seed.seat.js";
 import { seedSchedule } from "./data/seed.schedule.js";
 import { seedTattoos } from "./data/seed.tattoo.js";
+import { seedBills } from "./data/seed.bills.js";
+import { seedInventoryItems } from "./data/seed.inventory.item.js";
 /************
 |   SEEDERS  |
  ************/
@@ -27,6 +29,10 @@ export async function mainSeeder() {
     console.log("[ seeder ] schedules");
     await seedTattoos();
     console.log("[ seeder ] tattoos");
+    await seedBills();
+    console.log("[ seeder ] bills");
+    await seedInventoryItems();
+    console.log("[ seeder ] inventory items");
     console.log('\n');
 }
 //# sourceMappingURL=seeder.js.map

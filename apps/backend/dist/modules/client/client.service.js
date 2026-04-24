@@ -5,6 +5,12 @@ export const clientService = {
     get: async (client_id) => {
         return await clientModel.get(client_id);
     },
+    getByEmail: async (email) => {
+        const client = await clientModel.getByEmail(email);
+        if (!client)
+            return null;
+        return clienUtils.clientToPublic(client);
+    },
     getMany: async () => {
         /******************************
         |   BUSCAR TODOS LOS CLIENTES  |

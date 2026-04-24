@@ -8,10 +8,12 @@ export declare const cashierService: {
             email: string;
             password: string | null;
             type: import("@prisma/client").$Enums.PersonType;
+            tag: string | null;
+            is_deleted: boolean;
         };
     } & {
-        person_id: number;
         cashier_id: number;
+        person_id: number;
     }) | null>;
     getMany: () => Promise<CashierPublic[]>;
     create: (data: CreatePerson) => Promise<{
@@ -21,6 +23,8 @@ export declare const cashierService: {
         email: string;
         password: string | null;
         type: import("@prisma/client").$Enums.PersonType;
+        tag: string | null;
+        is_deleted: boolean;
     }>;
 };
 //# sourceMappingURL=cashier.service.d.ts.map

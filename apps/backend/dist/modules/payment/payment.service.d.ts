@@ -8,30 +8,30 @@ export declare const paymentService: {
         cashier_id: number;
         create_at: Date;
         bill_id: number;
+        method: import("@final/db").$Enums.PaymentMethod;
         payment_id: number;
         amount: import("@prisma/client/runtime/client").Decimal;
-        method: import("@final/db").$Enums.PaymentMethod;
-        transaction_ref: string;
+        transaction_ref: string | null;
         is_refunded: boolean;
     } | null>;
     getMany: (filters: GetManyPayment) => Promise<{
         cashier_id: number;
         create_at: Date;
         bill_id: number;
+        method: import("@final/db").$Enums.PaymentMethod;
         payment_id: number;
         amount: import("@prisma/client/runtime/client").Decimal;
-        method: import("@final/db").$Enums.PaymentMethod;
-        transaction_ref: string;
+        transaction_ref: string | null;
         is_refunded: boolean;
     }[]>;
     getManyByMonth: (filters: GetManyPaymentByMonth) => Promise<{
         cashier_id: number;
         create_at: Date;
         bill_id: number;
+        method: import("@final/db").$Enums.PaymentMethod;
         payment_id: number;
         amount: import("@prisma/client/runtime/client").Decimal;
-        method: import("@final/db").$Enums.PaymentMethod;
-        transaction_ref: string;
+        transaction_ref: string | null;
         is_refunded: boolean;
     }[]>;
     /***********

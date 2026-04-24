@@ -1,30 +1,55 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import type { BillFinance, BillWithRelations } from '@final/shared'
-import { getTotal, listBills } from '../services'
-import type { Payment } from '@final/shared'
+import { getCashOpeningByDate, getTotal, listBills } from '../services'
 
 type BillCard = {
   bill: BillWithRelations
   finance: BillFinance
 }
 
-function CashRegisterClosePage() {
+type Props = {
+  cashierEmail: string | null
+}
+
+const CASH_OPENING_KEY = "checkout_cash_openings_v1"
+
+function CashRegisterClosePage({ cashierEmail }: Props) {
   const [bills, setBills] = useState<BillCard[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
 
-  const totalIncome = bills.reduce((sum, card) => sum + (card.finance.total_after_discount || 0), 0)
-  const totalDiscount = bills.reduce((sum, card) => sum + (card.finance.total_discount || 0), 0)
-  const totalCollected = bills.reduce((sum, card) => {
-    const cardTotal = card.bill.payments.reduce(
-      (paymentSum: number, payment: Payment) => paymentSum + (Number(payment.amount) || 0), 
-      0 as number,
-    )
-    return sum + cardTotal
-  }, 0 as number)
+  // init cash amount
+  // const s = localStorage.getItem(CASH_OPENING_KEY)
+  // if(!s) return
+  // const parsed = JSON.parse(s) as QueuedBill[]
+  
 
+  const openingCash = useMemo(
+    () => (cashierEmail ? getCashOpeningByDate(selectedDate, cashierEmail) : 0),
+    [selectedDate, cashierEmail],
+  )
+
+  const paymentsByMethod = useMemo(() => {
+    const totals = { cash: 0, credit_card: 0, transfer: 0 }
+    for (const { bill } of bills) {
+      for (const p of bill!.payments) {
+        if (p.is_refunded) continue
+        const amt = Number(p.amount || 0)
+        if (p.method === 'cash') totals.cash += amt
+        if (p.method === 'credit_card') totals.credit_card += amt
+        if (p.method === 'transfer') totals.transfer += amt
+      }
+    }
+    return totals
+  }, [bills])
+
+  const totalIncome = bills.reduce((sum, card) => sum + (card.finance.total_with_tax || 0), 0)
+  const totalDiscount = bills.reduce((sum, card) => sum + (card.finance.total_discount || 0), 0)
+  const totalTax = bills.reduce((sum, card) => sum + (card.finance.tax || 0), 0)
+  const totalCollected = paymentsByMethod.cash + paymentsByMethod.credit_card + paymentsByMethod.transfer
   const totalPending = bills.reduce((sum, card) => sum + card.finance.debt, 0)
+  const closingCash = openingCash + paymentsByMethod.cash
 
   const handleDownloadPdf = async () => {
     const { downloadCashCloseReportPdf } = await import('../utils/cashCloseReportPdf.js')
@@ -34,6 +59,7 @@ function CashRegisterClosePage() {
       totals: {
         totalIncome,
         totalDiscount,
+        totalTax,
         totalCollected,
         totalPending,
       },
@@ -105,12 +131,36 @@ function CashRegisterClosePage() {
           <p className="amount discount">${totalDiscount.toFixed(2)}</p>
         </div>
         <div className="summary-card">
-          <h3>Total Cobrado</h3>
+          <h3>Pago en efectivo</h3>
+          <p className="amount success">${paymentsByMethod.cash.toFixed(2)}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Pago con tarjeta</h3>
+          <p className="amount success">${paymentsByMethod.credit_card.toFixed(2)}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Pago por transferencia</h3>
+          <p className="amount success">${paymentsByMethod.transfer.toFixed(2)}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Impuestos (18%)</h3>
+          <p className="amount tax">${totalTax.toFixed(2)}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Total cobrado</h3>
           <p className="amount success">${(totalCollected || 0).toFixed(2)}</p>
         </div>
         <div className="summary-card">
           <h3>Pendiente de Cobro</h3>
           <p className="amount warning">${totalPending.toFixed(2)}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Caja inicial (efectivo)</h3>
+          <p className="amount">${openingCash.toFixed(2)}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Caja final (efectivo)</h3>
+          <p className="amount">${closingCash.toFixed(2)}</p>
         </div>
       </div>
 
@@ -145,29 +195,58 @@ function CashRegisterClosePage() {
                   <th>Total</th>
                   <th>Descuento</th>
                   <th>Neto</th>
+                  <th>Impuesto (18%)</th>
+                  <th>Total con Impuesto</th>
                   <th>Pagado</th>
                   <th>Deuda</th>
                   <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {bills.map(({ bill, finance }) => (
-                  <tr key={bill.bill_id}>
-                    <td className="bill-id">#{bill.bill_id}</td>
-                    <td>{bill.client?.person?.first_name} {bill.client?.person?.last_name}</td>
-                    <td>{bill.worker?.person?.first_name} {bill.worker?.person?.last_name}</td>
-                    <td>${finance.total.toFixed(2)}</td>
-                    <td className="discount">${finance.total_discount.toFixed(2)}</td>
-                    <td className="net">${finance.total_after_discount.toFixed(2)}</td>
-                    <td className="paid">${(finance.total_after_discount - finance.debt).toFixed(2)}</td>
-                    <td className={finance.debt > 0 ? 'debt pending' : 'debt'}>
-                      ${finance.debt.toFixed(2)}
-                    </td>
-                    <td>
-                      <span className={`badge badge-${bill.status}`}>{bill.status}</span>
-                    </td>
-                  </tr>
-                ))}
+                {bills.map(({ bill, finance }) => {
+                  const validPayments = bill.payments.filter((p) => !p.is_refunded)
+                  return (
+                    <Fragment key={bill.bill_id}>
+                      <tr>
+                        <td className="bill-id">#{bill.bill_id}</td>
+                        <td>{bill.client?.person?.first_name} {bill.client?.person?.last_name}</td>
+                        <td>{bill.worker?.person?.first_name} {bill.worker?.person?.last_name}</td>
+                        <td>${finance.total.toFixed(2)}</td>
+                        <td className="discount">${finance.total_discount.toFixed(2)}</td>
+                        <td className="net">${finance.total_after_discount.toFixed(2)}</td>
+                        <td className="tax">${finance.tax.toFixed(2)}</td>
+                        <td className="total-with-tax">${finance.total_with_tax.toFixed(2)}</td>
+                        <td className="paid">${(finance.total_with_tax - finance.debt).toFixed(2)}</td>
+                        <td className={finance.debt > 0 ? 'debt pending' : 'debt'}>
+                          ${finance.debt.toFixed(2)}
+                        </td>
+                        <td>
+                          <span className={`badge badge-${bill.status}`}>{bill.status}</span>
+                        </td>
+                      </tr>
+                      <tr className="bill-payment-detail-row">
+                        <td colSpan={10}>
+                          <div className="bill-payment-detail-wrap">
+                            <strong>Pagos de factura #{bill.bill_id}</strong>
+                            {validPayments.length === 0 ? (
+                              <p className="bill-payment-empty">Sin pagos registrados</p>
+                            ) : (
+                              <ul className="bill-payment-list">
+                                {validPayments.map((p) => (
+                                  <li key={p.payment_id}>
+                                    <span>{new Date(p.create_at).toLocaleTimeString('es-ES')}</span>
+                                    <span>{p.method}</span>
+                                    <span>${Number(p.amount).toFixed(2)}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    </Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>

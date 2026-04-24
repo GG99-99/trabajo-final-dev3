@@ -5,14 +5,14 @@ export const inventoryService = {
     /*********
     |   READ  |
      *********/
-    get: async (filters) => {
-        return await inventoryModel.get(filters);
+    get: async (filters, tx) => {
+        return await inventoryModel.get(filters, tx);
     },
     getTotalQuantity: async (filters) => {
         return await inventoryModel.getTotalQuantity(filters);
     },
-    getNotExpired: async (filters) => {
-        return await inventoryModel.getNotExpired(filters);
+    getNotExpired: async (filters, tx) => {
+        return await inventoryModel.getNotExpired(filters, tx);
     },
     getManyNotExpired: async (filters) => {
         return await inventoryModel.getManyNotExpired(filters);

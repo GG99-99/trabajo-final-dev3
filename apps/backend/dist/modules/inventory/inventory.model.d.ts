@@ -4,9 +4,9 @@ export declare const inventoryModel: {
     /*********
     |   READ  |
      *********/
-    get: (filters: GetInventoryFilters) => Promise<{
-        inventory_item_id: number;
+    get: (filters: GetInventoryFilters, tx?: Prisma.TransactionClient) => Promise<{
         product_variant_id: number;
+        inventory_item_id: number;
         batch_number: string;
         current_quantity: number;
         expiry_date: Date | null;
@@ -26,7 +26,7 @@ export declare const inventoryModel: {
             })[];
         };
     }>>;
-    getNotExpired: (filters: GetNotExpired) => Promise<({
+    getNotExpired: (filters: GetNotExpired, tx?: Prisma.TransactionClient) => Promise<({
         productVariant: {
             product_variant_id: number;
             product_id: number;
@@ -36,8 +36,8 @@ export declare const inventoryModel: {
             unit: string;
         };
     } & {
-        inventory_item_id: number;
         product_variant_id: number;
+        inventory_item_id: number;
         batch_number: string;
         current_quantity: number;
         expiry_date: Date | null;
@@ -52,8 +52,8 @@ export declare const inventoryModel: {
             unit: string;
         };
     } & {
-        inventory_item_id: number;
         product_variant_id: number;
+        inventory_item_id: number;
         batch_number: string;
         current_quantity: number;
         expiry_date: Date | null;
@@ -62,8 +62,8 @@ export declare const inventoryModel: {
     |   UPDATE  |
      ***********/
     updateQuantity: (data: UpdateQuantity, tx: Prisma.TransactionClient) => Promise<{
-        inventory_item_id: number;
         product_variant_id: number;
+        inventory_item_id: number;
         batch_number: string;
         current_quantity: number;
         expiry_date: Date | null;
@@ -72,8 +72,8 @@ export declare const inventoryModel: {
     |   CREATE  |
      ***********/
     create: (data: CreateInventoryItem, tx: Prisma.TransactionClient) => Promise<{
-        inventory_item_id: number;
         product_variant_id: number;
+        inventory_item_id: number;
         batch_number: string;
         current_quantity: number;
         expiry_date: Date | null;

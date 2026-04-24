@@ -1,5 +1,8 @@
 import { Router } from "express";
 import { authRouter } from "./modules/auth/auth.router.js";
+import { publicRouter } from "./modules/public/public.router.js";
+import { punchRouter } from "./modules/punch/punch.router.js";
+import { fingerprintRouter } from "./modules/fingerprint/fingerprint.router.js";
 import { appointmentRouter } from "./modules/appointment/appointment.router.js";
 import { assistRouter } from "./modules/asists/assist.router.js";
 import { attendanceRouter } from "./modules/attendance/attendance.router.js";
@@ -20,8 +23,15 @@ import { seatRouter } from "./modules/seat/seat.router.js";
 import { stockMovementRouter } from "./modules/stockMovement/stockMovement.router.js";
 import { tattooRouter } from "./modules/tattoo/tattoo.router.js";
 import { workerRouter } from "./modules/worker/worker.router.js";
+import { auditRouter } from "./modules/audit/audit.router.js";
 export const router = Router();
+router.get("/health", (_req, res) => {
+    return res.json({ ok: true, data: true, error: null });
+});
 router.use("/auth", authRouter);
+router.use("/public", publicRouter);
+router.use("/punch", punchRouter);
+router.use("/fingerprints", fingerprintRouter);
 router.use("/appointments", appointmentRouter);
 router.use("/assists", assistRouter);
 router.use("/attendances", attendanceRouter);
@@ -42,4 +52,5 @@ router.use("/seats", seatRouter);
 router.use("/stock-movements", stockMovementRouter);
 router.use("/tattoos", tattooRouter);
 router.use("/workers", workerRouter);
+router.use("/audit", auditRouter);
 //# sourceMappingURL=api.router.js.map

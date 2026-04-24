@@ -5,6 +5,7 @@ export declare const clientService: {
         medical_notes: string | null;
         client_id: number;
     } | null>;
+    getByEmail: (email: string) => Promise<ClientPublic | null>;
     getMany: () => Promise<ClientPublic[]>;
     create: (data: ClientCreate) => Promise<{
         person_id: number;
@@ -13,6 +14,8 @@ export declare const clientService: {
         email: string;
         password: string | null;
         type: import("@prisma/client").$Enums.PersonType;
+        tag: string | null;
+        is_deleted: boolean;
     }>;
 };
 //# sourceMappingURL=client.service.d.ts.map

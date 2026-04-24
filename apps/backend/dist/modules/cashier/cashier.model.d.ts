@@ -10,10 +10,12 @@ export declare const cashierModel: {
             email: string;
             password: string | null;
             type: import("@final/db").$Enums.PersonType;
+            tag: string | null;
+            is_deleted: boolean;
         };
     } & {
-        person_id: number;
         cashier_id: number;
+        person_id: number;
     }) | null>;
     getMany: () => Promise<({
         person: {
@@ -23,10 +25,12 @@ export declare const cashierModel: {
             email: string;
             password: string | null;
             type: import("@final/db").$Enums.PersonType;
+            tag: string | null;
+            is_deleted: boolean;
         };
     } & {
-        person_id: number;
         cashier_id: number;
+        person_id: number;
     })[]>;
     /***********
     |   CREATE  |

@@ -10,6 +10,18 @@ export const clientModel = {
     },
     getMany: async () => {
         return await prisma.client.findMany({
+            where: { person: { is_deleted: false } },
+            include: { person: true }
+        });
+    },
+    getByEmail: async (email) => {
+        return await prisma.client.findFirst({
+            where: {
+                person: {
+                    email: email,
+                    is_deleted: false,
+                }
+            },
             include: { person: true }
         });
     },

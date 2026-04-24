@@ -1,1 +1,1 @@
-{"version":3,"file":"appointment.router.d.ts","sourceRoot":"","sources":["../../../src/modules/appointment/appointment.router.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAGjC,eAAO,MAAM,iBAAiB,EAAE,MAAiB,CAAC"}
+{"version":3,"file":"appointment.router.d.ts","sourceRoot":"","sources":["../../../src/modules/appointment/appointment.router.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAIjC,eAAO,MAAM,iBAAiB,EAAE,MAAiB,CAAC"}

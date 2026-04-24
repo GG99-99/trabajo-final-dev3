@@ -4,8 +4,8 @@ export declare const categoryModel: {
     getMany: (filters: GetManyCategory) => Promise<CategoryWithRelations[]>;
     create: (data: CreateCategory) => Promise<{
         name: string;
-        category_id: number;
         description: string | null;
+        category_id: number;
     }>;
 };
 //# sourceMappingURL=category.model.d.ts.map

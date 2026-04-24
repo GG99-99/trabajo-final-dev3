@@ -5,6 +5,12 @@ export const tattooModel = {
             where: { ...data }
         });
     },
+    getMany: async () => {
+        return await prisma.tattoo.findMany({
+            orderBy: { name: 'asc' },
+            include: { img: { select: { img_id: true, s3_url: true, s3_key: true, description: true } } }
+        });
+    },
     getMaterials: async (data) => {
         return await prisma.tattooMaterial.findMany({
             where: { ...data }

@@ -3,8 +3,9 @@ export const inventoryModel = {
     /*********
     |   READ  |
      *********/
-    get: async (filters) => {
-        return await prisma.inventoryItem.findUnique({
+    get: async (filters, tx) => {
+        const client = tx ?? prisma;
+        return await client.inventoryItem.findUnique({
             where: {
                 inventory_item_id: filters.inventory_item_id,
                 ...(filters.gte && { current_quantity: { gte: filters.gte } })
@@ -25,8 +26,9 @@ export const inventoryModel = {
             },
         });
     },
-    getNotExpired: async (filters) => {
-        return await prisma.inventoryItem.findFirst({
+    getNotExpired: async (filters, tx) => {
+        const client = tx ?? prisma;
+        return await client.inventoryItem.findFirst({
             where: {
                 product_variant_id: filters.product_variant_id,
                 current_quantity: { gt: 0 },

@@ -4,6 +4,7 @@ export type UserCredentials = {
     type: 'client' | 'worker' | 'cashier';
     tag?: string | null;
 };
+/** Payload del JWT en la cookie `cashier_jwt` (checkout). */
 export type CashierJwtPayload = {
     email: string;
     person_id: number;

@@ -42,7 +42,10 @@ export const billService = {
 
         
         const total = aggregatesTotal + tattoosTotal + itemsTotal
-        const rawDebt = total - discountTotal - paymentsTotal
+        const totalAfterDiscount = total - discountTotal
+        const tax = totalAfterDiscount * 0.18
+        const totalWithTax = totalAfterDiscount + tax
+        const rawDebt = totalWithTax - paymentsTotal
         const debt = Math.max(0, rawDebt)
         const overpaid = rawDebt < 0 ? Math.abs(rawDebt) : 0
 
@@ -50,7 +53,9 @@ export const billService = {
             bill_id,
             total,                            // total bruto (antes de descuentos)
             total_discount: discountTotal,         // cuanto se descontó
-            total_after_discount: total - discountTotal,  // total real a pagar
+            total_after_discount: totalAfterDiscount,  // total real a pagar (sin impuesto)
+            tax,                              // impuesto del 18%
+            total_with_tax: totalWithTax,     // total con impuesto incluido
             debt,                                  // lo que falta por pagar (ya restando pagos)
             overpaid
         }

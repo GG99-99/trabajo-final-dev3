@@ -198,7 +198,7 @@ function BillPaymentPage() {
               >
                 <h4>Factura #{entry.bill.bill_id}</h4>
                 <p>Estado: {entry.bill.status}</p>
-                <p>Total a pagar: ${Number(entry.finance.total_after_discount).toFixed(2)}</p>
+                <p>Total {"(sin impuestos)"}: ${Number(entry.finance.total_after_discount).toFixed(2)}</p>
                 <p>Deuda pendiente: ${Number(entry.finance.debt).toFixed(2)}</p>
                 <button className="checkout-btn-generate" onClick={() => void handleSelectBill(entry)}>
                   Seleccionar para pagar

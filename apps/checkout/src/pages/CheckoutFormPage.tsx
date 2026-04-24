@@ -40,6 +40,193 @@ const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   transfer: 'Transferencia',
 }
 
+const parseMoneyInput = (raw: string): number => {
+  const normalized = raw.replace(',', '.').trim()
+  const parsed = Number.parseFloat(normalized)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const openInvoicePrint = (params: {
+  billId?: number
+  date: string
+  items: CartItem[]
+  aggregates: Extra['aggregates']
+  discounts: Extra['discounts']
+  payments: DraftPayment[]
+  subtotal: number
+  total: number
+  tax: number
+}) => {
+  const {
+    billId,
+    date,
+    items,
+    aggregates,
+    discounts,
+    payments,
+    subtotal,
+    total,
+    tax,
+  } = params
+
+  const paymentMethodLabel = (m: PaymentMethod) => PAYMENT_METHOD_LABEL[m] ?? m
+  const esc = (value: string) =>
+    value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;')
+
+  // Calculate totals for printing
+  const aggregatesTotal = aggregates.reduce((sum, agg) => sum + Number(agg.amount || 0), 0)
+  const discountsTotal = discounts.reduce((sum, disc) => sum + Number(disc.amount || 0), 0)
+
+  const rows = items
+    .map(
+      (item) => `
+        <tr>
+          <td>${esc(item.name)}</td>
+          <td>${item.type === 'tattoo' ? 'Tattoo' : 'Producto'}</td>
+          <td style="text-align:right;">$${item.price.toFixed(2)}</td>
+          <td style="text-align:center;">${item.type === 'tattoo' ? '—' : item.quantity}</td>
+          <td style="text-align:right;">$${(item.type === 'tattoo' ? item.price : item.price * item.quantity).toFixed(2)}</td>
+        </tr>
+      `,
+    )
+    .join('')
+
+  const aggRows = aggregates
+    .filter((a) => Number.isFinite(a.amount) && a.amount !== 0)
+    .map(
+      (a) => `
+        <tr>
+          <td>${esc(a.reason || 'Agregado')}</td>
+          <td style="text-align:right;">+$${a.amount.toFixed(2)}</td>
+        </tr>
+      `,
+    )
+    .join('')
+
+  const disRows = discounts
+    .filter((d) => Number.isFinite(d.amount) && d.amount !== 0)
+    .map(
+      (d) => `
+        <tr>
+          <td>${esc(d.reason || 'Descuento')}</td>
+          <td style="text-align:right;">-$${d.amount.toFixed(2)}</td>
+        </tr>
+      `,
+    )
+    .join('')
+
+  const payRows = payments
+    .filter((p) => Number.isFinite(p.amount) && p.amount > 0)
+    .map(
+      (p) => `
+        <tr>
+          <td>${paymentMethodLabel(p.method)}</td>
+          <td style="text-align:right;">$${p.amount.toFixed(2)}</td>
+        </tr>
+      `,
+    )
+    .join('')
+
+  const html = `
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Factura ${billId ? `#${billId}` : ''}</title>
+        <style>
+          body { font-family: Arial, sans-serif; color:#111; padding:24px; }
+          h1 { margin:0 0 8px; font-size:20px; }
+          .meta { margin:0 0 16px; color:#444; font-size:13px; }
+          table { width:100%; border-collapse:collapse; margin-bottom:14px; }
+          th, td { border-bottom:1px solid #ddd; padding:8px; font-size:13px; }
+          th { text-align:left; background:#f4f4f4; }
+          .totals td { border-bottom:none; padding:4px 8px; }
+          .totals .final td { font-size:16px; font-weight:700; border-top:1px solid #111; padding-top:8px; }
+          .section { margin-top:16px; }
+        </style>
+      </head>
+      <body>
+        <h1>Factura ${billId ? `#${billId}` : ''}</h1>
+        <p class="meta">Fecha: ${esc(date)} &nbsp;|&nbsp; Impresa: ${new Date().toLocaleString('es-ES')}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Tipo</th>
+              <th>Precio</th>
+              <th>Cant.</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>${rows || '<tr><td colspan="5">Sin ítems</td></tr>'}</tbody>
+        </table>
+
+        <div class="section">
+          <table>
+            <tbody class="totals">
+              <tr><td>Subtotal</td><td style="text-align:right;">$${subtotal.toFixed(2)}</td></tr>
+              ${aggRows || ''}
+              ${disRows || ''}
+              <tr class="final"><td>Total</td><td style="text-align:right;">$${total.toFixed(2)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <table>
+            <thead><tr><th>Método de pago</th><th style="text-align:right;">Monto</th></tr></thead>
+            <tbody>${payRows || '<tr><td colspan="2">Sin pagos registrados al crear</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.focus();
+            window.print();
+          };
+        </script>
+      </body>
+    </html>
+  `
+
+  const iframe = document.createElement('iframe')
+  iframe.style.position = 'fixed'
+  iframe.style.right = '0'
+  iframe.style.bottom = '0'
+  iframe.style.width = '0'
+  iframe.style.height = '0'
+  iframe.style.border = '0'
+  iframe.setAttribute('aria-hidden', 'true')
+  document.body.appendChild(iframe)
+
+  const doc = iframe.contentWindow?.document
+  if (!doc) {
+    iframe.remove()
+    return
+  }
+
+  doc.open()
+  doc.write(html)
+  doc.close()
+
+  let printed = false
+  const triggerPrint = () => {
+    if (printed) return
+    printed = true
+    iframe.contentWindow?.focus()
+    iframe.contentWindow?.print()
+    window.setTimeout(() => iframe.remove(), 1200)
+  }
+
+  iframe.onload = triggerPrint
+  window.setTimeout(triggerPrint, 250)
+}
+
 function CheckoutFormPage() {
   const { enqueueBill } = useOfflineBillQueue()
   const [saleType, setSaleType] = useState<'direct' | 'appointment'>('direct')
@@ -176,9 +363,11 @@ function CheckoutFormPage() {
 
   // Cálculos de totales
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const aggregatesTotal = extra.aggregates.reduce((sum, agg) => sum + agg.amount, 0)
-  const discountsTotal = extra.discounts.reduce((sum, disc) => sum + disc.amount, 0)
-  const total = subtotal + aggregatesTotal - discountsTotal
+  const aggregatesTotal = extra.aggregates.reduce((sum, agg) => sum + Number(agg.amount || 0), 0)
+  const discountsTotal = extra.discounts.reduce((sum, disc) => sum + Number(disc.amount || 0), 0)
+  const totalAfterDiscount = subtotal + aggregatesTotal - discountsTotal
+  const tax = totalAfterDiscount * 0.18
+  const total = totalAfterDiscount + tax
 
   const paymentsSum = useMemo(
     () =>
@@ -329,13 +518,24 @@ function CheckoutFormPage() {
           quantity: Math.max(1, Math.trunc(item.quantity)),
         }))
 
+      // Calculate 18% tax and add it as an aggregate
+      const baseTotal = subtotal + aggregatesTotal - discountsTotal
+      const taxAmount = baseTotal * 0.18
+      
       const normalizedExtra = {
-        aggregates: extra.aggregates
-          .filter((agg) => agg.reason.trim().length > 0 && Number.isFinite(agg.amount) && agg.amount !== 0)
-          .map((agg) => ({
-            amount: agg.amount,
-            reason: agg.reason.trim(),
-          })),
+        aggregates: [
+          ...extra.aggregates
+            .filter((agg) => agg.reason.trim().length > 0 && Number.isFinite(agg.amount) && agg.amount !== 0)
+            .map((agg) => ({
+              amount: agg.amount,
+              reason: agg.reason.trim(),
+            })),
+          // Add 18% tax as automatic aggregate
+          ...(taxAmount > 0 ? [{
+            amount: taxAmount,
+            reason: 'Impuesto (18%)',
+          }] : [])
+        ],
         discounts: extra.discounts
           .filter((disc) => disc.reason.trim().length > 0 && Number.isFinite(disc.amount) && disc.amount !== 0)
           .map((disc) => ({
@@ -377,6 +577,18 @@ function CheckoutFormPage() {
       if (!result.ok) {
         throw new Error(typeof result.error === 'string' ? result.error : result.error?.message ?? 'Error al crear factura')
       }
+
+      openInvoicePrint({
+        billId: result.data?.bill_id,
+        date,
+        items: [...cartItems],
+        aggregates: [...extra.aggregates],
+        discounts: [...extra.discounts],
+        payments: [...draftPayments],
+        subtotal,
+        total,
+        tax,
+      })
 
       setSuccess('Factura creada exitosamente')
       setCartItems([])
@@ -430,7 +642,7 @@ function CheckoutFormPage() {
 
       <div className="checkout-form-grid">
         {/* SECCIÓN 1: TIPO DE VENTA Y CLIENTE */}
-        <section className="checkout-section">
+        <section className="checkout-section checkout-extras-section">
           <h3>Tipo de Venta</h3>
           <label>
             <input
@@ -652,7 +864,7 @@ function CheckoutFormPage() {
                 value={agg.amount}
                 onChange={(e) => {
                   const newAggs = [...extra.aggregates]
-                  newAggs[idx].amount = parseFloat(e.target.value) || 0
+                  newAggs[idx].amount = parseMoneyInput(e.target.value)
                   setExtra({ ...extra, aggregates: newAggs })
                 }}
               />
@@ -666,7 +878,7 @@ function CheckoutFormPage() {
           </button>
         </section>
 
-        <section className="checkout-section">
+        <section className="checkout-section checkout-extras-section">
           <h3>Descuentos</h3>
           {extra.discounts.map((disc, idx) => (
             <div key={idx} className="checkout-extra-item">
@@ -686,7 +898,7 @@ function CheckoutFormPage() {
                 value={disc.amount}
                 onChange={(e) => {
                   const newDiscs = [...extra.discounts]
-                  newDiscs[idx].amount = parseFloat(e.target.value) || 0
+                  newDiscs[idx].amount = parseMoneyInput(e.target.value)
                   setExtra({ ...extra, discounts: newDiscs })
                 }}
               />
@@ -718,7 +930,7 @@ function CheckoutFormPage() {
                     placeholder="Monto"
                     value={p.amount || ''}
                     onChange={(e) =>
-                      updateDraftPayment(p.id, { amount: parseFloat(e.target.value) || 0 })
+                      updateDraftPayment(p.id, { amount: parseMoneyInput(e.target.value) })
                     }
                   />
                   <select
@@ -764,7 +976,7 @@ function CheckoutFormPage() {
             <h4>Estado de cobro</h4>
             <div className="checkout-debt-rows">
               <div className="checkout-debt-row">
-                <span>Total a pagar (neto)</span>
+                <span>Total a pagar (con impuesto)</span>
                 <strong>${total.toFixed(2)}</strong>
               </div>
               <div className="checkout-debt-row">
@@ -801,6 +1013,14 @@ function CheckoutFormPage() {
         <div className="checkout-total-row">
           <span>Descuentos:</span>
           <strong>-${discountsTotal.toFixed(2)}</strong>
+        </div>
+        <div className="checkout-total-row">
+          <span>Subtotal con descuentos:</span>
+          <strong>${totalAfterDiscount.toFixed(2)}</strong>
+        </div>
+        <div className="checkout-total-row">
+          <span>Impuesto (18%):</span>
+          <strong>${tax.toFixed(2)}</strong>
         </div>
         <div className="checkout-total-row checkout-total-final">
           <span>Total:</span>

@@ -7,16 +7,16 @@ export declare const noAssistService: {
             worker_id: number;
         };
         attendance: {
-            day: string;
             is_deleted: boolean;
+            day: string;
             status: boolean;
             attendance_id: number;
             work_date: Date;
         };
     } & {
+        is_deleted: boolean;
         worker_id: number;
         create_at: Date;
-        is_deleted: boolean;
         attendance_id: number;
         no_assist_id: number;
     }) | null>;
@@ -27,16 +27,16 @@ export declare const noAssistService: {
             worker_id: number;
         };
         attendance: {
-            day: string;
             is_deleted: boolean;
+            day: string;
             status: boolean;
             attendance_id: number;
             work_date: Date;
         };
     } & {
+        is_deleted: boolean;
         worker_id: number;
         create_at: Date;
-        is_deleted: boolean;
         attendance_id: number;
         no_assist_id: number;
     }) | null>;
@@ -47,16 +47,16 @@ export declare const noAssistService: {
             worker_id: number;
         };
         attendance: {
-            day: string;
             is_deleted: boolean;
+            day: string;
             status: boolean;
             attendance_id: number;
             work_date: Date;
         };
     } & {
+        is_deleted: boolean;
         worker_id: number;
         create_at: Date;
-        is_deleted: boolean;
         attendance_id: number;
         no_assist_id: number;
     }) | null)[]>;

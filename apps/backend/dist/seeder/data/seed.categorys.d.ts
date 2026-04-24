@@ -4,7 +4,7 @@ export declare const categoryData: {
 }[];
 export declare function seedCategories(): Promise<{
     name: string;
-    category_id: number;
     description: string | null;
+    category_id: number;
 }[]>;
 //# sourceMappingURL=seed.categorys.d.ts.map

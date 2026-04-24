@@ -119,6 +119,39 @@ input:disabled, select:disabled, textarea:disabled {
   background: rgba(239, 68, 68, 0.25);
 }
 
+.cash-opening-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 60;
+}
+
+.cash-opening-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 1.25rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #16181d;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.cash-opening-card h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.cash-opening-card p {
+  margin: 0;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
 .checkout-login-page {
   min-height: 70vh;
   display: flex;
@@ -388,16 +421,22 @@ label {
 
 .checkout-extra-item {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .checkout-extra-item input {
-  flex: 1;
+  flex: 1 1 180px;
+  min-width: 150px;
 }
 
 .checkout-extra-item button {
   flex-shrink: 0;
+}
+
+.checkout-extras-section .btn-secondary {
+  align-self: flex-start;
 }
 
 .checkout-payments-section .checkout-payments-hint {
@@ -878,6 +917,38 @@ label {
 
 .bills-table .debt.pending {
   color: #fca5a5;
+}
+
+.bill-payment-detail-row td {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bill-payment-detail-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.bill-payment-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bill-payment-list li {
+  display: grid;
+  grid-template-columns: 140px 140px 1fr;
+  gap: 0.65rem;
+  font-size: 0.85rem;
+}
+
+.bill-payment-empty {
+  margin: 0;
+  opacity: 0.65;
+  font-size: 0.85rem;
 }
 
 .badge {

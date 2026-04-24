@@ -10,6 +10,7 @@ export type CashCloseBillRow = {
 export type CashCloseTotals = {
   totalIncome: number
   totalDiscount: number
+  totalTax: number
   totalCollected: number
   totalPending: number
 }
@@ -58,6 +59,7 @@ export function downloadCashCloseReportPdf(params: {
   const summaryLines = [
     ['Total de entrada', formatMoney(totals.totalIncome)],
     ['Descuentos', formatMoney(totals.totalDiscount)],
+    ['Impuestos (18%)', formatMoney(totals.totalTax)],
     ['Total cobrado', formatMoney(totals.totalCollected)],
     ['Pendiente de cobro', formatMoney(totals.totalPending)],
   ] as const
@@ -78,7 +80,7 @@ export function downloadCashCloseReportPdf(params: {
     doc.text('No hay facturas registradas para esta fecha.', margin, y)
   } else {
     const body = rows.map(({ bill, finance }) => {
-      const paid = finance.total - finance.debt
+      const paid = finance.total_with_tax - finance.debt
       return [
         String(bill.bill_id),
         personName(bill.client?.person),
@@ -86,6 +88,8 @@ export function downloadCashCloseReportPdf(params: {
         formatMoney(finance.total),
         formatMoney(finance.total_discount),
         formatMoney(finance.total_after_discount),
+        formatMoney(finance.tax),
+        formatMoney(finance.total_with_tax),
         formatMoney(paid),
         formatMoney(finance.debt),
         String(bill.status ?? ''),
@@ -103,6 +107,8 @@ export function downloadCashCloseReportPdf(params: {
           'Total',
           'Desc.',
           'Neto',
+          'Impuesto',
+          'Total c/Imp',
           'Pagado',
           'Deuda',
           'Estado',
@@ -114,16 +120,64 @@ export function downloadCashCloseReportPdf(params: {
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
         0: { cellWidth: 12 },
-        1: { cellWidth: 28 },
-        2: { cellWidth: 28 },
-        3: { cellWidth: 22 },
-        4: { cellWidth: 18 },
-        5: { cellWidth: 22 },
-        6: { cellWidth: 22 },
-        7: { cellWidth: 22 },
-        8: { cellWidth: 18 },
+        1: { cellWidth: 25 },
+        2: { cellWidth: 25 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 16 },
+        5: { cellWidth: 20 },
+        6: { cellWidth: 18 },
+        7: { cellWidth: 20 },
+        8: { cellWidth: 20 },
+        9: { cellWidth: 18 },
+        10: { cellWidth: 16 },
       },
     })
+
+    // Add payment details section
+    y = (doc as any).lastAutoTable.finalY + 10
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('Detalles de Pagos', margin, y)
+    y += 6
+
+    for (const { bill, finance } of rows) {
+      const validPayments = bill.payments.filter((p) => !p.is_refunded)
+      
+      if (validPayments.length > 0) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.text(`Factura #${bill.bill_id} - ${personName(bill.client?.person)}`, margin, y)
+        y += 4
+
+        const paymentBody = validPayments.map((p) => [
+          new Date(p.create_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+          p.method === 'cash' ? 'Efectivo' : p.method === 'credit_card' ? 'Tarjeta' : 'Transferencia',
+          formatMoney(Number(p.amount)),
+        ])
+
+        autoTable(doc, {
+          startY: y,
+          margin: { left: margin, right: margin },
+          head: [['Hora', 'Método', 'Monto']],
+          body: paymentBody,
+          styles: { fontSize: 8, cellPadding: 1 },
+          headStyles: { fillColor: [100, 150, 200], textColor: 255, fontStyle: 'bold' },
+          columnStyles: {
+            0: { cellWidth: 20 },
+            1: { cellWidth: 40 },
+            2: { cellWidth: 30 },
+          },
+        })
+        
+        y = (doc as any).lastAutoTable.finalY + 3
+        
+        // Check if we need a new page
+        if (y > doc.internal.pageSize.getHeight() - 30) {
+          doc.addPage()
+          y = margin
+        }
+      }
+    }
   }
 
   const safeName = reportDate.replaceAll(/[^\d-]/g, '')
