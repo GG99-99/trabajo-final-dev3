@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FingerprintService")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8b2d593ac11fa04e6c94fc18bd85c0a155741306")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1f01e8dd6a31c41be6776327ad6bf296d1b02e1e")]
 [assembly: System.Reflection.AssemblyProductAttribute("FingerprintService")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FingerprintService")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
