@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Fragment, useEffect, useMemo, useState } from 'react'
+=======
+import { useEffect, useState, useCallback } from 'react'
+>>>>>>> 70b7825e7eadcc0e47348e8ccec710197c0ae7e6
 import type { BillFinance, BillWithRelations } from '@final/shared'
 import { getCashOpeningByDate, getTotal, listBills } from '../services'
 
@@ -52,7 +56,7 @@ function CashRegisterClosePage({ cashierEmail }: Props) {
   const closingCash = openingCash + paymentsByMethod.cash
 
   const handleDownloadPdf = async () => {
-    const { downloadCashCloseReportPdf } = await import('../utils/cashCloseReportPdf.js')
+    const { downloadCashCloseReportPdf } = await import('../utils/cashCloseReportPdf')
     downloadCashCloseReportPdf({
       reportDate: selectedDate,
       rows: bills,
@@ -66,7 +70,7 @@ function CashRegisterClosePage({ cashierEmail }: Props) {
     })
   }
 
-  const refreshBills = async () => {
+  const refreshBills = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -98,11 +102,11 @@ function CashRegisterClosePage({ cashierEmail }: Props) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedDate])
 
   useEffect(() => {
-    refreshBills()
-  }, [selectedDate])
+    void refreshBills()
+  }, [refreshBills])
 
   return (
     <section className="cash-register-close">

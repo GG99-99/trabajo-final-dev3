@@ -3,7 +3,7 @@ import type { ApiResponse, AppointmentWithRelation, GetAppointmentFilters } from
 
 const APPOINTMENT_PATH = '/appointments'
 
-export async function getAppointments(filters?: GetAppointmentFilters) {
+export async function getAppointments(filters?: GetAppointmentFilters): Promise<ApiResponse<AppointmentWithRelation[]>> {
   try {
     const response = await apiClient.get<ApiResponse<AppointmentWithRelation[]>>(APPOINTMENT_PATH, {
       params: filters,
@@ -11,7 +11,7 @@ export async function getAppointments(filters?: GetAppointmentFilters) {
     return response.data
   } catch (error) {
     console.error('Error loading appointments:', error)
-    return { ok: false, data: [] }
+    return { ok: false, data: null, error: { name: 'NetworkError', message: 'Error cargando citas', statusCode: 503 } }
   }
 }
 

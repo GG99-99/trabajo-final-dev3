@@ -11,7 +11,6 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express'
 import { swaggerSpec } from './swagger/swagger.config.js'
 
-
 /***********************************
 |   00. CARGAR DATA SEEDS EN LA DB  |
  ***********************************/
@@ -27,6 +26,21 @@ import { errorHandler } from "./handlers/errorHandler.js";
 import { router as apiRouter } from "./api.router.js";
 import { initSocketIO } from "./modules/socket/socket.service.js";
 import { auditMiddleware } from "./middlewares/audit.middleware.js";
+
+/****************************
+|   RESILIENCIA — REDIS      |
+ ****************************/
+import { getRedis } from './lib/redis.js'
+import { startQueueWorker } from './lib/writeQueue.js'
+import { getCircuitState } from './lib/circuitBreaker.js'
+import { queueLength } from './lib/writeQueue.js'
+import { queueHandler } from './queueWorker.js'
+
+// Inicializa Redis (lazy, no bloquea el arranque)
+getRedis()
+
+// Inicia el worker que drena la cola de escrituras
+const stopQueueWorker = startQueueWorker(queueHandler)
 
 
 /*****************************
@@ -71,6 +85,20 @@ app.get('/', (_req: Request, res: Response) => {
   res.send("El servidor del trabajo final esta funcionando")
 })
 
+/***********************
+|   HEALTH / STATUS     |
+ ***********************/
+app.get('/health', async (_req: Request, res: Response) => {
+  const circuit = await getCircuitState()
+  const queueLen = await queueLength()
+  res.json({
+    ok: true,
+    timestamp: new Date().toISOString(),
+    circuit_breaker: circuit,
+    write_queue_pending: queueLen,
+  })
+})
+
 /*******************
 |   2. SWAGGER UI   |
  *******************/
@@ -113,5 +141,16 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   const swaggerUrl = `http://localhost:${PORT}/api-docs`
   console.log(`✅ Servidor corriendo en http://localhost:${PORT}`)
   console.log(`📄 Swagger UI en ${swaggerUrl}`)
+  console.log(`🔴 Redis resiliencia activa`)
   openBrowser(swaggerUrl)
+})
+
+// Limpieza al apagar
+process.on('SIGTERM', () => {
+  stopQueueWorker()
+  process.exit(0)
+})
+process.on('SIGINT', () => {
+  stopQueueWorker()
+  process.exit(0)
 })

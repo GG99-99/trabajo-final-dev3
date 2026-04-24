@@ -54,37 +54,65 @@ export const tattooController = {
 
   /** PATCH /api/tattoos/:tattoo_id — update fields and optionally replace image */
   update: async (req: Request, res: Response) => {
-    const tattoo_id = Number(req.params.tattoo_id)
-    const { name, cost, time, description } = req.body
-    const file = (req as any).file as Express.Multer.File | undefined
+    try {
+      const tattoo_id = Number(req.params.tattoo_id)
+      if (isNaN(tattoo_id)) {
+        return res.status(400).json({ ok: false, data: null, error: { name: 'BadRequest', statusCode: 400, message: 'Invalid tattoo_id' } })
+      }
 
-    const tattoo = await prisma.$transaction(async (tx) => {
-      if (file) {
-        const existing = await tx.tattoo.findUnique({ where: { tattoo_id } })
-        if (existing) {
-          // Delete old S3 object if exists
-          const oldImg = await tx.img.findUnique({ where: { img_id: existing.img_id } })
-          if (oldImg?.s3_key) await s3Service.delete(oldImg.s3_key).catch(() => null)
+      const { name, cost, time, description } = req.body
+      const file = (req as any).file as Express.Multer.File | undefined
+
+      const tattoo = await prisma.$transaction(async (tx) => {
+        // Verify tattoo exists first
+        const existing = await tx.tattoo.findUnique({
+          where: { tattoo_id },
+          include: { img: true },
+        })
+        if (!existing) throw Object.assign(new Error('Tattoo not found'), { statusCode: 404, name: 'NotFound' })
+
+        if (file) {
+          // Delete old S3 object if it has one
+          if (existing.img?.s3_key) {
+            await s3Service.delete(existing.img.s3_key).catch(() => null)
+          }
 
           // Upload new image to S3
           const { key, url } = await s3Service.upload(file.buffer, file.mimetype)
           await tx.img.update({
             where: { img_id: existing.img_id },
-            data: { s3_key: key, s3_url: url, ...(description !== undefined && { description }) }
+            data: {
+              s3_key: key,
+              s3_url: url,
+              ...(description !== undefined && { description }),
+            },
+          })
+        } else if (description !== undefined && existing.img_id) {
+          // Update just the description even without a new image
+          await tx.img.update({
+            where: { img_id: existing.img_id },
+            data: { description },
           })
         }
-      }
-      return await tx.tattoo.update({
-        where: { tattoo_id },
-        data: {
-          ...(name && { name }),
-          ...(cost && { cost: parseFloat(cost) }),
-          ...(time && { time }),
-        },
-        include: { img: { select: { img_id: true, s3_url: true, s3_key: true } } }
-      })
-    })
 
-    return res.json({ ok: true, data: tattoo, error: null })
+        return await tx.tattoo.update({
+          where: { tattoo_id },
+          data: {
+            ...(name        !== undefined && name        !== '' && { name }),
+            ...(cost        !== undefined && cost        !== '' && { cost: parseFloat(cost) }),
+            ...(time        !== undefined && time        !== '' && { time }),
+          },
+          include: { img: { select: { img_id: true, s3_url: true, s3_key: true } } },
+        })
+      })
+
+      return res.json({ ok: true, data: tattoo, error: null })
+    } catch (err: any) {
+      const status = err.statusCode ?? 500
+      return res.status(status).json({
+        ok: false, data: null,
+        error: { name: err.name ?? 'InternalError', statusCode: status, message: err.message ?? 'Update failed' },
+      })
+    }
   },
 };

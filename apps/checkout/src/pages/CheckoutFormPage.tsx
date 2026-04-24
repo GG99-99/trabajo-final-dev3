@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { CreateFullBill } from '@final/shared'
+import type { CreateFullBill } from '@final/shared'
 import type {
   WorkerPublic,
   AppointmentWithRelation,
@@ -9,7 +9,7 @@ import type {
   PaymentMethod,
 } from '@final/shared'
 import { createBill, getWorkers, getAppointments, searchClientByEmail, getAllProductVariants, getAllTattoos } from '../services'
-import { useOfflineBillQueue, isTransientCreateFailure } from '../context/OfflineBillQueueContext.tsx'
+import { useOfflineBillQueue, isTransientCreateFailure } from '../context/OfflineBillQueueContext'
 
 interface CartItem {
   id: string
@@ -279,10 +279,10 @@ function CheckoutFormPage() {
           setAppointments(appointmentsRes.data)
         }
         if (variantsRes.ok && variantsRes.data) {
-          setProductVariants(variantsRes.data)
+          setProductVariants(variantsRes.data ?? [])
         }
         if (tattoosRes.ok && tattoosRes.data) {
-          setTattoos(tattoosRes.data)
+          setTattoos(tattoosRes.data ?? [])
         }
       } catch (err) {
         setDataError(err instanceof Error ? err.message : 'Error cargando datos')
