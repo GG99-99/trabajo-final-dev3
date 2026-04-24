@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import { authRouter } from "./modules/auth/auth.router.js";
 import { publicRouter } from "./modules/public/public.router.js";
 import { punchRouter } from "./modules/punch/punch.router.js";
@@ -26,6 +26,10 @@ import { workerRouter } from "./modules/worker/worker.router.js";
 import { auditRouter } from "./modules/audit/audit.router.js";
 
 export const router: Router = Router()
+
+router.get("/health", (_req: Request, res: Response) => {
+  return res.json({ ok: true, data: true, error: null })
+})
 
 router.use("/auth", authRouter)
 router.use("/public", publicRouter)

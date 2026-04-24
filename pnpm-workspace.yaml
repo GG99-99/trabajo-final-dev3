@@ -6,6 +6,7 @@ packages:
 onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'
+  - '@scarf/scarf'
   - bcrypt
   - core-js
   - esbuild

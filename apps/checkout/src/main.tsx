@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { registerCIR } from './lib/cir'
+import { OfflineBillQueueProvider } from './context/OfflineBillQueueContext.tsx'
 
 // Registra el Service Worker de resiliencia (CIR).
 // Intercepta todas las peticiones al core y provee cache + cola offline.
@@ -10,6 +11,8 @@ registerCIR()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <OfflineBillQueueProvider>
+      <App />
+    </OfflineBillQueueProvider>
   </StrictMode>,
 )

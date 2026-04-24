@@ -28,6 +28,13 @@ export interface CreateFullBill {
         product_variant_id: number;
         quantity: number;
     }[];
+    payments: {
+        create_at: Date;
+        amount: number;
+        method: "cash" | "credit_card" | "transfer";
+        transaction_ref: string | null;
+        is_refunded: boolean;
+    }[];
     extra: {
         aggregates: {
             amount: number;
@@ -55,6 +62,13 @@ export interface CreateBill {
     cashier_id: number;
     appointment_id?: number;
     create_at: Date;
+    payments?: {
+        create_at: Date;
+        amount: number;
+        method: "cash" | "credit_card" | "transfer";
+        transaction_ref: string | null;
+        is_refunded: boolean;
+    }[];
 }
 export interface CreateBillDetail {
     bill_id: number;

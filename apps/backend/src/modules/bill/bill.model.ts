@@ -126,9 +126,26 @@ export const billModel = {
     |   CREATE  |
      ***********/
     create: async (data: CreateBill, tx: Prisma.TransactionClient) => {
+        const { payments, ...rest } = data;
+        
         return await tx.bill.create({
-            data: {...data}
-        })
+            data: {
+                ...rest,
+                payments: payments ? {
+                    create: payments.map(payment => ({
+                        cashier_id: data.cashier_id,
+                        create_at: payment.create_at,
+                        amount: payment.amount,
+                        method: payment.method,
+                        transaction_ref: payment.transaction_ref,
+                        is_refunded: payment.is_refunded
+                    }))
+                } : undefined
+            },
+            include: {
+                payments: true  
+            }
+        });
     },
     
     createBillDetail: async (data: CreateBillDetail, tx: Prisma.TransactionClient) => {

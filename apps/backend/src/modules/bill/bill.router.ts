@@ -1,12 +1,11 @@
 import { Router } from "express";
 import { billController } from "./bill.controller.js";
-// import { validateJwtMiddleware } from "../../middlewares/index.middlewares.js";
-// import { valiateTypePerson } from "../../middlewares/auth/validateTypePerson.middleware.js";
+import { validateJwtOrCashierMiddleware } from "#backend/middlewares";
 
 export const billRouter: Router = Router();
 
 billRouter
-  // .use(validateJwtMiddleware)
+  .use(validateJwtOrCashierMiddleware)
   .get("/", billController.getMany)
   .get("/detail", billController.get)
   .get("/total", billController.getTotal)

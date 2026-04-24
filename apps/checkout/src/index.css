@@ -63,6 +63,18 @@ input:disabled, select:disabled, textarea:disabled {
   padding: 2rem;
 }
 
+.app-offline-queue-banner {
+  margin: -0.5rem 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  background: rgba(234, 179, 8, 0.12);
+  color: #fbbf24;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -86,7 +98,72 @@ input:disabled, select:disabled, textarea:disabled {
 
 .app-nav-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: center;
+}
+
+.app-session-email {
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  margin-left: 0.25rem;
+}
+
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.checkout-login-page {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.checkout-login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.checkout-login-card h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+}
+
+.checkout-login-sub {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+  opacity: 0.75;
+  line-height: 1.4;
+}
+
+.checkout-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.checkout-login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.checkout-login-form .checkout-error-banner {
+  margin: 0;
 }
 
 /* CHECKOUT FORM PAGE */
@@ -301,6 +378,14 @@ label {
   width: 60px;
 }
 
+.checkout-cart-qty-na {
+  display: inline-block;
+  min-width: 2.5rem;
+  text-align: center;
+  opacity: 0.45;
+  font-weight: 500;
+}
+
 .checkout-extra-item {
   display: flex;
   gap: 0.5rem;
@@ -313,6 +398,124 @@ label {
 
 .checkout-extra-item button {
   flex-shrink: 0;
+}
+
+.checkout-payments-section .checkout-payments-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  opacity: 0.75;
+  line-height: 1.4;
+}
+
+.checkout-empty--inline {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.checkout-draft-payments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.checkout-draft-payment-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.checkout-draft-payment-row input[type='number'] {
+  width: 110px;
+  min-width: 90px;
+}
+
+.checkout-draft-payment-row select {
+  min-width: 140px;
+}
+
+.checkout-draft-payment-row input[type='text'] {
+  flex: 1;
+  min-width: 160px;
+}
+
+.checkout-debt-panel {
+  margin-top: 1.25rem;
+  padding: 1rem 1rem 1rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.checkout-debt-panel h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.checkout-debt-panel--active {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.06);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
+}
+
+.checkout-debt-panel--active h4 {
+  color: #93c5fd;
+}
+
+.checkout-debt-panel--partial {
+  border-left: 4px solid #f59e0b;
+}
+
+.checkout-debt-panel--settled {
+  border-left: 4px solid #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.checkout-debt-panel--settled h4 {
+  color: #6ee7b7;
+}
+
+.checkout-debt-panel--overpay {
+  border-left-color: #a78bfa;
+}
+
+.checkout-debt-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.checkout-debt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  gap: 1rem;
+}
+
+.checkout-debt-row--highlight {
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 1rem;
+}
+
+.checkout-debt-row--overpay {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  color: #c4b5fd;
+}
+
+.checkout-debt-amount--owes {
+  color: #fbbf24;
+}
+
+.checkout-debt-amount--clear {
+  color: #34d399;
 }
 
 .checkout-totals {

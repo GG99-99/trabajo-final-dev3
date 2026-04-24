@@ -78,50 +78,55 @@ export const billService = {
    ***********/
   create: async (data: CreateFullBill) => {
     try {
-      return await withCircuitBreaker(() =>
-        prisma.$transaction(async (tx) => {
-          const bill = await billModel.create(
-            {
-              client_id: data.client_id,
-              worker_id: data.worker_id,
-              cashier_id: data.cashier_id,
-              appointment_id: data.appointment_id ?? undefined,
-              create_at: data.create_at,
-            },
-            tx
-          )
+      return await prisma.$transaction(async (tx) => {
+        /***************
+        |   CREAR BILL  |
+         ***************/
+        const bill = await billModel.create({
+          client_id: data.client_id,
+          worker_id: data.worker_id,
+          cashier_id: data.cashier_id,
+          appointment_id: data.appointment_id ?? undefined,
+          create_at: data.create_at,
+        }, tx)
 
-          for (const item of data.items) {
-            const stockMovement = await stockMovementService.createForProductVariant(
-              {
-                product_variant_id: item.product_variant_id,
-                reason: `factura ${bill.bill_id}`,
-                type: 'exit',
-                quantity: item.quantity,
-              },
-              tx
-            )
-            await billModel.createBillDetail(
-              { bill_id: bill.bill_id, stock_movement_id: stockMovement.stock_movement_id },
-              tx
-            )
-          }
+        for (const item of data.items) {
+          /*****************************************************
+          |   CREAR STOCK MOVEMENT DE LOS ITEMS DE LA FACTURA  |
+           *****************************************************/
+          const stockMovement = await stockMovementService.createForProductVariant({
+            product_variant_id: item.product_variant_id,
+            reason: `factura ${bill.bill_id}`,
+            type: 'exit',
+            quantity: item.quantity,
+          }, tx)
 
-          for (const tattoo_id of data.tatto_ids) {
-            await billModel.createBillTatto({ tattoo_id, bill_id: bill.bill_id }, tx)
-          }
+          /**********************
+          |   CREAR BILL DETAIL  |
+           **********************/
+          await billModel.createBillDetail({
+            bill_id: bill.bill_id,
+            stock_movement_id: stockMovement.stock_movement_id,
+          }, tx)
+        }
 
-          for (const agg of data.extra.aggregates) {
-            await billModel.createBillAggregate({ bill_id: bill.bill_id, amount: agg.amount, reason: agg.reason }, tx)
-          }
+        /************************************
+        |   CREAR RELACIONES BILL -> TATTO  |
+         ************************************/
+        for (const tattoo_id of data.tatto_ids) {
+          await billModel.createBillTatto({ tattoo_id, bill_id: bill.bill_id }, tx)
+        }
 
-          for (const dis of data.extra.discounts) {
-            await billModel.createBillDiscount({ bill_id: bill.bill_id, amount: dis.amount, reason: dis.reason }, tx)
-          }
+        for (const agg of data.extra.aggregates) {
+          await billModel.createBillAggregate({ bill_id: bill.bill_id, amount: agg.amount, reason: agg.reason }, tx)
+        }
 
-          return bill
-        })
-      )
+        for (const dis of data.extra.discounts) {
+          await billModel.createBillDiscount({ bill_id: bill.bill_id, amount: dis.amount, reason: dis.reason }, tx)
+        }
+
+        return bill
+      })
     } catch (err: any) {
       if (err?.statusCode === 503) {
         await enqueueWrite('bill', 'create', data as unknown as Record<string, unknown>)
